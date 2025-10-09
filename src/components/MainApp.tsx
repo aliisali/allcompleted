@@ -18,6 +18,7 @@ import { ReportsManagement } from './Reports/ReportsManagement';
 import { ProductManagement } from './Products/ProductManagement';
 import { CustomerManagement } from './Customers/CustomerManagement';
 import ARCameraModule from './ARModule/ARCameraModule';
+import UpdateARViewer from './ARModule/UpdateARViewer';
 import { ModulePermissions } from './Admin/ModulePermissions';
 import { AdminHTMLManager } from './Admin/AdminHTMLManager';
 import { ModelConverter } from './Admin/ModelConverter';
@@ -43,6 +44,7 @@ export function MainApp() {
         case 'users': return <UserManagement />;
         case 'businesses': return <BusinessManagement />;
         case 'ar-camera': return <ARCameraModule />;
+        case 'update-ar': return <UpdateARViewer />;
         case 'permissions': return <PermissionManagementWrapper />;
         case 'reports': return <ReportsManagement />;
         case 'products': return <ProductManagement />;
