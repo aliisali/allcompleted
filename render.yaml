@@ -1,0 +1,56 @@
+databases:
+  - name: jobmanagerpro-database
+    plan: free
+    region: frankfurt
+
+services:
+  # Backend API Service
+  - type: web
+    name: jobmanagerpro-backend
+    runtime: node
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free
+    region: frankfurt
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jobmanagerpro-database
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_URL
+        value: https://jobmanagerpro-frontend.onrender.com
+      - key: UPLOAD_DIR
+        value: uploads
+      - key: MAX_FILE_SIZE
+        value: "10485760"
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        value: yourapp@gmail.com
+      - key: SMTP_PASS
+        sync: false   # set securely in Render dashboard
+
+  # Frontend Static Site
+  - type: web
+    name: jobmanagerpro-frontend
+    runtime: static
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://jobmanagerpro-backend.onrender.com/api
+        
