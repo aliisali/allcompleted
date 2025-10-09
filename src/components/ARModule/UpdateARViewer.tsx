@@ -53,31 +53,99 @@ export default function UpdateARViewer() {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: 1280, height: 720 }
-      });
+      console.log('Starting camera...');
+      showNotification('Requesting camera access...', 'success');
+
+      const constraints = {
+        video: {
+          facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+
+      console.log('Requesting getUserMedia with constraints:', constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('Got media stream:', stream);
+
+      if (videoRef.current) {
+        console.log('Setting video srcObject');
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+
+        videoRef.current.onloadedmetadata = async () => {
+          console.log('Video metadata loaded');
+          try {
+            await videoRef.current?.play();
+            console.log('Video playing');
+            setCameraActive(true);
+            showNotification('Camera started successfully!', 'success');
+          } catch (playError) {
+            console.error('Error playing video:', playError);
+            showNotification('Error starting video playback', 'error');
+          }
+        };
+
+        videoRef.current.onerror = (err) => {
+          console.error('Video element error:', err);
+          showNotification('Video error occurred', 'error');
+        };
+      }
+    } catch (error: any) {
+      console.error('Camera error:', error);
+      let errorMessage = 'Camera access denied or not available';
+
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'Camera permission denied. Please allow camera access.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'No camera found on this device.';
+      } else if (error.name === 'NotReadableError') {
+        errorMessage = 'Camera is already in use by another application.';
+      } else if (error.name === 'OverconstrainedError') {
+        errorMessage = 'Camera constraints not supported. Trying again...';
+        setTimeout(() => startCameraFallback(), 500);
+        return;
+      }
+
+      showNotification(errorMessage, 'error');
+    }
+  };
+
+  const startCameraFallback = async () => {
+    try {
+      console.log('Trying fallback camera constraints');
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
 
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play();
+        videoRef.current.onloadedmetadata = async () => {
+          await videoRef.current?.play();
           setCameraActive(true);
+          showNotification('Camera started with basic settings!', 'success');
         };
       }
     } catch (error) {
-      console.error('Camera error:', error);
-      showNotification('Camera access denied or not available', 'error');
+      console.error('Fallback camera error:', error);
+      showNotification('Unable to access camera', 'error');
     }
   };
 
   const stopCamera = () => {
+    console.log('Stopping camera');
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+        console.log('Stopped track:', track.label);
+      });
       streamRef.current = null;
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     setCameraActive(false);
+    showNotification('Camera stopped', 'success');
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
