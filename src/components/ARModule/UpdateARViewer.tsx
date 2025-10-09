@@ -35,7 +35,7 @@ export default function UpdateARViewer() {
   }, []);
 
   useEffect(() => {
-    if (cameraActive && selectedItem) {
+    if (cameraActive) {
       renderARView();
     }
   }, [cameraActive, selectedItem, scale, rotation, position, showGrid]);
@@ -60,7 +60,11 @@ export default function UpdateARViewer() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
-        setCameraActive(true);
+
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play();
+          setCameraActive(true);
+        };
       }
     } catch (error) {
       console.error('Camera error:', error);
@@ -121,16 +125,21 @@ export default function UpdateARViewer() {
     const canvas = canvasRef.current;
     const video = videoRef.current;
 
-    if (!canvas || !video || !selectedItem) return;
+    if (!canvas || !video) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const draw = () => {
-      if (!cameraActive) return;
+      if (!cameraActive || !video.videoWidth) {
+        requestAnimationFrame(draw);
+        return;
+      }
 
-      canvas.width = video.videoWidth || 1280;
-      canvas.height = video.videoHeight || 720;
+      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+      }
 
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
