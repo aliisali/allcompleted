@@ -15,13 +15,14 @@ export function CreateJobModal({ isOpen, onClose, onJobCreated }: CreateJobModal
   const [jobType, setJobType] = useState<'measurement' | 'installation'>('measurement');
   const [isNewCustomer, setIsNewCustomer] = useState(true);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Job details
     title: '',
     description: '',
     scheduledDate: '',
     scheduledTime: '09:00',
-    
+
     // Customer details (for new customer)
     customerName: '',
     customerEmail: '',
@@ -32,8 +33,6 @@ export function CreateJobModal({ isOpen, onClose, onJobCreated }: CreateJobModal
   });
 
   if (!isOpen) return null;
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
