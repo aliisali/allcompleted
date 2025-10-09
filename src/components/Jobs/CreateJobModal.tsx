@@ -38,6 +38,13 @@ export function CreateJobModal({ isOpen, onClose, onJobCreated }: CreateJobModal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Restrict job creation to admins and business owners only
+    if (user?.role !== 'admin' && user?.role !== 'business') {
+      alert('Only administrators and business owners can create jobs.');
+      setIsSubmitting(false);
+      return;
+    }
+
     // Prevent duplicate submissions
     if (isSubmitting) {
       return;
