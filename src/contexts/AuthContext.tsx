@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
 import ApiService from '../services/api';
 import { LocalStorageService } from '../lib/storage';
+import { DatabaseService } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -30,11 +31,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const parsedUser = JSON.parse(storedUser);
           console.log('✅ AuthContext: Found stored session for:', parsedUser.email);
-          
-          // Verify user still exists in database or localStorage
-          const users = LocalStorageService.getUsers();
-          const userExists = users.some(u => u.id === parsedUser.id && u.isActive);
-          
+
+          // Verify user still exists in Supabase or localStorage
+          let userExists = false;
+
+          if (DatabaseService.isAvailable()) {
+            const users = await DatabaseService.getUsers();
+            userExists = users.some(u => u.id === parsedUser.id && u.isActive);
+          } else {
+            const users = LocalStorageService.getUsers();
+            userExists = users.some(u => u.id === parsedUser.id && u.isActive);
+          }
+
           if (userExists) {
             setUser(parsedUser);
           } else {
@@ -49,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error initializing auth:', error);
     }
-    
+
     setIsLoading(false);
     console.log('✅ AuthContext: Initialization complete');
   };
@@ -57,44 +65,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     console.log('🔐 AuthContext: Attempting login for:', email);
     setIsLoading(true);
-    
+
     try {
       let foundUser = null;
-      
-      // Use localStorage authentication
-      console.log('📱 Using localStorage authentication...');
-      const users = LocalStorageService.getUsers();
-      foundUser = users.find(u => 
-        u.email.toLowerCase() === email.toLowerCase() && 
-        u.password === password &&
-        u.isActive
-      );
-      
-      if (foundUser) {
-        console.log('✅ localStorage authentication successful');
-      } else {
-        console.log('❌ Login failed - user not found or inactive');
+
+      // Try Supabase first
+      if (DatabaseService.isAvailable()) {
+        console.log('🗄️ Using Supabase authentication...');
+        const users = await DatabaseService.getUsers();
+        foundUser = users.find(u =>
+          u.email.toLowerCase() === email.toLowerCase() &&
+          u.password === password &&
+          u.isActive
+        );
+
+        if (foundUser) {
+          console.log('✅ Supabase authentication successful');
+        }
       }
 
-      if (foundUser) {
-        console.log('✅ AuthContext: Login successful for:', foundUser.name, foundUser.role);
-        setUser(foundUser);
-        
-        // Save session
-        try {
-          localStorage.setItem('current_user', JSON.stringify(foundUser));
-          console.log('✅ AuthContext: Session saved');
-        } catch (error) {
-          console.error('❌ AuthContext: Failed to save session:', error);
+      // Fallback to localStorage
+      if (!foundUser) {
+        console.log('📱 Trying localStorage authentication...');
+        const users = LocalStorageService.getUsers();
+        foundUser = users.find(u =>
+          u.email.toLowerCase() === email.toLowerCase() &&
+          u.password === password &&
+          u.isActive
+        );
+
+        if (foundUser) {
+          console.log('✅ localStorage authentication successful');
         }
-        
-        setIsLoading(false);
-        return true;
       }
-      
-      console.log('❌ AuthContext: Login failed');
+
+      if (!foundUser) {
+        console.log('❌ Login failed - user not found or inactive');
+        setIsLoading(false);
+        return false;
+      }
+
+      console.log('✅ AuthContext: Login successful for:', foundUser.name, foundUser.role);
+      setUser(foundUser);
+
+      // Save session
+      try {
+        localStorage.setItem('current_user', JSON.stringify(foundUser));
+        console.log('✅ AuthContext: Session saved');
+      } catch (error) {
+        console.error('❌ AuthContext: Failed to save session:', error);
+      }
+
       setIsLoading(false);
-      return false;
+      return true;
     } catch (error) {
       console.error('❌ AuthContext: Login error:', error);
       setIsLoading(false);
