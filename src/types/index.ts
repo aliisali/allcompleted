@@ -43,7 +43,7 @@ export interface Job {
   jobType: 'measurement' | 'installation';
   status: 'pending' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled' | 'tbd' | 'awaiting-deposit' | 'awaiting-payment';
   customerId: string;
-  employeeId: string;
+  employeeId: string | null;
   businessId: string;
   scheduledDate: string;
   scheduledTime: string;

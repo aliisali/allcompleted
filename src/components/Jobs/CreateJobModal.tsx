@@ -47,8 +47,16 @@ export function CreateJobModal({ isOpen, onClose, onJobCreated }: CreateJobModal
     try {
       let customerId = selectedCustomerId;
 
+      // Get business ID - use default if user doesn't have one
+      const businessId = user?.businessId || '550e8400-e29b-41d4-a716-446655440001';
+
       // Create new customer if needed
       if (isNewCustomer) {
+        if (!formData.customerName || !formData.customerAddress) {
+          alert('Customer name and address are required');
+          return;
+        }
+
         const customerData = {
           name: formData.customerName,
           email: formData.customerEmail,
@@ -56,16 +64,35 @@ export function CreateJobModal({ isOpen, onClose, onJobCreated }: CreateJobModal
           mobile: formData.customerMobile,
           address: formData.customerAddress,
           postcode: formData.customerPostcode,
-          businessId: user?.businessId || 'business-1'
+          businessId
         };
 
+        console.log('📝 Creating customer with data:', customerData);
         const newCustomer = await addCustomer(customerData) as any;
-        customerId = (newCustomer && newCustomer.id) ? newCustomer.id : `customer-${Date.now()}`;
+
+        if (!newCustomer || !newCustomer.id) {
+          throw new Error('Failed to create customer - no ID returned');
+        }
+
+        customerId = newCustomer.id;
+        console.log('✅ Customer created with ID:', customerId);
+      }
+
+      // Validate we have a customer ID
+      if (!customerId) {
+        alert('Please select a customer or create a new one');
+        return;
       }
       
       // Generate customer reference number
       const customerReference = `REF-${Date.now().toString().slice(-6)}`;
       
+      // Validate scheduled date
+      if (!formData.scheduledDate) {
+        alert('Please select a scheduled date');
+        return;
+      }
+
       // Create job
       const jobData = {
         title: formData.title || `${jobType === 'measurement' ? 'Measurement' : 'Installation'} Appointment`,
@@ -73,8 +100,8 @@ export function CreateJobModal({ isOpen, onClose, onJobCreated }: CreateJobModal
         jobType,
         status: 'pending' as const,
         customerId,
-        employeeId: '', // Will be assigned based on booking mode
-        businessId: user?.businessId || 'business-1',
+        employeeId: null, // Will be assigned later - null instead of empty string for foreign key
+        businessId,
         scheduledDate: formData.scheduledDate,
         scheduledTime: formData.scheduledTime,
         customerReference,
@@ -92,6 +119,8 @@ export function CreateJobModal({ isOpen, onClose, onJobCreated }: CreateJobModal
           userName: user?.name || ''
         }]
       };
+
+      console.log('📝 Creating job with data:', jobData);
       
       await addJob(jobData);
       
@@ -102,9 +131,10 @@ export function CreateJobModal({ isOpen, onClose, onJobCreated }: CreateJobModal
       onClose();
       resetForm();
 
-    } catch (error) {
-      console.error('Error creating job:', error);
-      alert('Failed to create job. Please try again.');
+    } catch (error: any) {
+      console.error('❌ Error creating job:', error);
+      const errorMessage = error?.message || 'Unknown error';
+      alert(`Failed to create job: ${errorMessage}\n\nPlease check the console for details.`);
     } finally {
       setIsSubmitting(false);
     }

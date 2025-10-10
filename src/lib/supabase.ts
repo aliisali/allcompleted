@@ -333,7 +333,7 @@ export class DatabaseService {
         jobType: 'measurement' as const,
         status: job.status || 'pending',
         customerId: job.customer_id,
-        employeeId: job.employee_id || '',
+        employeeId: job.employee_id || null,
         businessId: job.business_id,
         scheduledDate: job.scheduled_date,
         scheduledTime: new Date(job.scheduled_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
@@ -358,6 +358,17 @@ export class DatabaseService {
   static async createJob(jobData: any): Promise<Job> {
     try {
       console.log('📝 DatabaseService: Creating job with data:', jobData);
+
+      // Validate required fields
+      if (!jobData.customerId) {
+        throw new Error('Customer ID is required');
+      }
+      if (!jobData.businessId) {
+        throw new Error('Business ID is required');
+      }
+      if (!jobData.scheduledDate) {
+        throw new Error('Scheduled date is required');
+      }
 
       // Format the scheduled date to include time
       const scheduledDateTime = jobData.scheduledDate + ' ' + (jobData.scheduledTime || '09:00');
@@ -401,7 +412,7 @@ export class DatabaseService {
         jobType: jobData.jobType || 'measurement',
         status: data.status,
         customerId: data.customer_id,
-        employeeId: data.employee_id || '',
+        employeeId: data.employee_id || null,
         businessId: data.business_id,
         scheduledDate: data.scheduled_date,
         scheduledTime: jobData.scheduledTime || '09:00',
