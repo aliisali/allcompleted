@@ -3,6 +3,7 @@ import { User, Business, Job, Customer, Notification, Product } from '../types';
 import { EmailService } from '../services/EmailService';
 import ApiService from '../services/api';
 import { LocalStorageService } from '../lib/storage';
+import { DatabaseService } from '../lib/supabase';
 
 interface DataContextType {
   // Users
@@ -68,30 +69,47 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const loadData = async () => {
     try {
-      console.log('📊 Loading data from multiple sources...');
-      
-      // Use localStorage for data
-      console.log('📝 Using localStorage data...');
-      LocalStorageService.initializeData();
-      
-      setUsers(LocalStorageService.getUsers());
-      setBusinesses(LocalStorageService.getBusinesses());
-      setJobs(LocalStorageService.getJobs());
-      setCustomers(LocalStorageService.getCustomers());
-      setProducts(LocalStorageService.getProducts());
-      setNotifications(LocalStorageService.getNotifications());
-      
-      console.log('✅ localStorage data loaded:', {
-        users: LocalStorageService.getUsers().length,
-        businesses: LocalStorageService.getBusinesses().length,
-        jobs: LocalStorageService.getJobs().length,
-        customers: LocalStorageService.getCustomers().length,
-        products: LocalStorageService.getProducts().length
-      });
-      
+      console.log('📊 Loading data from Supabase...');
+
+      if (DatabaseService.isAvailable()) {
+        const [usersData, businessesData, jobsData, customersData, productsData, notificationsData] = await Promise.all([
+          DatabaseService.getUsers(),
+          DatabaseService.getBusinesses(),
+          DatabaseService.getJobs(),
+          DatabaseService.getCustomers(),
+          DatabaseService.getProducts(),
+          DatabaseService.getNotifications()
+        ]);
+
+        setUsers(usersData);
+        setBusinesses(businessesData);
+        setJobs(jobsData);
+        setCustomers(customersData);
+        setProducts(productsData);
+        setNotifications(notificationsData);
+
+        console.log('✅ Supabase data loaded:', {
+          users: usersData.length,
+          businesses: businessesData.length,
+          jobs: jobsData.length,
+          customers: customersData.length,
+          products: productsData.length
+        });
+      } else {
+        console.log('📝 Supabase not available, using localStorage...');
+        LocalStorageService.initializeData();
+
+        setUsers(LocalStorageService.getUsers());
+        setBusinesses(LocalStorageService.getBusinesses());
+        setJobs(LocalStorageService.getJobs());
+        setCustomers(LocalStorageService.getCustomers());
+        setProducts(LocalStorageService.getProducts());
+        setNotifications(LocalStorageService.getNotifications());
+      }
+
     } catch (error) {
       console.error('❌ Error loading data:', error);
-      // Initialize localStorage as final fallback
+      console.log('📝 Falling back to localStorage...');
       LocalStorageService.initializeData();
       setUsers(LocalStorageService.getUsers());
       setBusinesses(LocalStorageService.getBusinesses());
@@ -100,7 +118,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setProducts(LocalStorageService.getProducts());
       setNotifications(LocalStorageService.getNotifications());
     }
-    
+
     setLoading(false);
   };
 
@@ -193,37 +211,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       console.log('👤 Creating user:', userData.name);
 
-      // Create user via multiple backends (this already handles localStorage)
-      await saveToMultipleSources('create', 'user', userData);
+      let newUser: User;
 
-      // Get the newly created user from localStorage (don't create again)
-      const users = LocalStorageService.getUsers();
-      const newUser = users[users.length - 1]; // Get the last created user
+      if (DatabaseService.isAvailable()) {
+        console.log('✅ Using Supabase to create user');
+        newUser = await DatabaseService.createUser(userData);
+      } else {
+        console.log('📝 Using localStorage to create user');
+        await saveToMultipleSources('create', 'user', userData);
+        const users = LocalStorageService.getUsers();
+        newUser = users[users.length - 1];
+      }
 
       setUsers(prev => [...prev, newUser]);
-      
+
       // Send welcome email with credentials
       try {
-        const businessName = newUser.businessId 
-          ? businesses.find(b => b.id === newUser.businessId)?.name 
+        const businessName = newUser.businessId
+          ? businesses.find(b => b.id === newUser.businessId)?.name
           : undefined;
-          
+
         await EmailService.sendWelcomeEmail({
           name: newUser.name,
           email: newUser.email,
-          password: userData.password, // Use original password from form
+          password: userData.password,
           role: newUser.role,
           businessName
         });
-        
+
         console.log('✅ Welcome email sent to:', newUser.email);
       } catch (emailError) {
         console.error('⚠️ Failed to send welcome email:', emailError);
-        // Don't fail user creation if email fails
       }
-      
+
       showSuccessMessage(`User "${userData.name}" created successfully!`);
-      return newUser; // Return the user for reference
+      return newUser;
     } catch (error) {
       console.error('❌ Failed to create user:', error);
       showErrorMessage('Failed to create user. Please try again.');
@@ -364,12 +386,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Job management
   const addJob = async (jobData: Omit<Job, 'id' | 'createdAt'>) => {
     try {
-      // Create job via multiple backends (this already handles localStorage)
-      await saveToMultipleSources('create', 'job', jobData);
+      let newJob: Job;
 
-      // Get the newly created job from localStorage (don't create again)
-      const jobs = LocalStorageService.getJobs();
-      const newJob = jobs[jobs.length - 1]; // Get the last created job
+      if (DatabaseService.isAvailable()) {
+        console.log('✅ Using Supabase to create job');
+        newJob = await DatabaseService.createJob(jobData);
+      } else {
+        console.log('📝 Using localStorage to create job');
+        await saveToMultipleSources('create', 'job', jobData);
+        const jobs = LocalStorageService.getJobs();
+        newJob = jobs[jobs.length - 1];
+      }
 
       setJobs(prev => [...prev, newJob]);
 
@@ -382,13 +409,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateJob = async (id: string, jobData: Partial<Job>) => {
     try {
-      // Update job via multiple backends
-      await saveToMultipleSources('update', 'job', jobData, id);
-      
-      setJobs(prev => prev.map(job => 
+      if (DatabaseService.isAvailable()) {
+        await DatabaseService.updateJob(id, jobData);
+      } else {
+        await saveToMultipleSources('update', 'job', jobData, id);
+      }
+
+      setJobs(prev => prev.map(job =>
         job.id === id ? { ...job, ...jobData } : job
       ));
-      
+
       showSuccessMessage('Job updated successfully!');
     } catch (error) {
       console.error('Error updating job:', error);
@@ -412,17 +442,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Customer management
   const addCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt'>) => {
     try {
-      // Create customer via multiple backends (this already handles localStorage)
-      await saveToMultipleSources('create', 'customer', customerData);
+      let newCustomer: Customer;
 
-      // Get the newly created customer from localStorage (don't create again)
-      const customers = LocalStorageService.getCustomers();
-      const newCustomer = customers[customers.length - 1]; // Get the last created customer
+      if (DatabaseService.isAvailable()) {
+        console.log('✅ Using Supabase to create customer');
+        newCustomer = await DatabaseService.createCustomer(customerData);
+      } else {
+        console.log('📝 Using localStorage to create customer');
+        await saveToMultipleSources('create', 'customer', customerData);
+        const customers = LocalStorageService.getCustomers();
+        newCustomer = customers[customers.length - 1];
+      }
 
       setCustomers(prev => [...prev, newCustomer]);
 
       showSuccessMessage('Customer added successfully!');
-      return newCustomer; // Return the customer for use in job creation
+      return newCustomer;
     } catch (error) {
       console.error('Error creating customer:', error);
       showErrorMessage('Failed to create customer.');
