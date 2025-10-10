@@ -183,6 +183,43 @@ export class DatabaseService {
     }
   }
 
+  static async updateBusiness(id: string, businessData: Partial<Business>): Promise<void> {
+    try {
+      const updateData: any = {};
+      if (businessData.name) updateData.name = businessData.name;
+      if (businessData.address) updateData.address = businessData.address;
+      if (businessData.phone !== undefined) updateData.phone = businessData.phone;
+      if (businessData.email !== undefined) updateData.email = businessData.email;
+      if (businessData.features) updateData.features = businessData.features;
+      if (businessData.subscription) updateData.subscription = businessData.subscription;
+      if (businessData.vrViewEnabled !== undefined) updateData.vr_view_enabled = businessData.vrViewEnabled;
+
+      const { error } = await supabase
+        .from('businesses')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating business:', error);
+      throw error;
+    }
+  }
+
+  static async deleteBusiness(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('businesses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting business:', error);
+      throw error;
+    }
+  }
+
   static async getCustomers(): Promise<Customer[]> {
     try {
       const { data, error } = await supabase
@@ -244,6 +281,42 @@ export class DatabaseService {
     }
   }
 
+  static async updateCustomer(id: string, customerData: Partial<Customer>): Promise<void> {
+    try {
+      const updateData: any = {};
+      if (customerData.name) updateData.name = customerData.name;
+      if (customerData.email !== undefined) updateData.email = customerData.email || null;
+      if (customerData.phone !== undefined) updateData.phone = customerData.phone || null;
+      if (customerData.mobile !== undefined) updateData.mobile = customerData.mobile || null;
+      if (customerData.address) updateData.address = customerData.address;
+      if (customerData.postcode !== undefined) updateData.postcode = customerData.postcode || null;
+
+      const { error } = await supabase
+        .from('customers')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      throw error;
+    }
+  }
+
+  static async deleteCustomer(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      throw error;
+    }
+  }
+
   static async getJobs(): Promise<Job[]> {
     try {
       const { data, error } = await supabase
@@ -284,53 +357,67 @@ export class DatabaseService {
 
   static async createJob(jobData: any): Promise<Job> {
     try {
+      console.log('📝 DatabaseService: Creating job with data:', jobData);
+
+      // Format the scheduled date to include time
+      const scheduledDateTime = jobData.scheduledDate + ' ' + (jobData.scheduledTime || '09:00');
+
+      const insertData = {
+        id: jobData.id || `JOB-${Date.now()}`,
+        title: jobData.title,
+        description: jobData.description || '',
+        status: jobData.status || 'pending',
+        customer_id: jobData.customerId,
+        employee_id: jobData.employeeId || null,
+        business_id: jobData.businessId,
+        scheduled_date: scheduledDateTime,
+        quotation: jobData.quotation || 0,
+        invoice: jobData.invoice || 0,
+        signature: jobData.signature || null,
+        images: jobData.images || [],
+        documents: jobData.documents || [],
+        checklist: jobData.checklist || []
+      };
+
+      console.log('📝 DatabaseService: Inserting to Supabase:', insertData);
+
       const { data, error } = await supabase
         .from('jobs')
-        .insert([{
-          id: jobData.id || `JOB-${Date.now()}`,
-          title: jobData.title,
-          description: jobData.description || '',
-          status: jobData.status || 'pending',
-          customer_id: jobData.customerId,
-          employee_id: jobData.employeeId || null,
-          business_id: jobData.businessId,
-          scheduled_date: jobData.scheduledDate,
-          quotation: jobData.quotation || 0,
-          invoice: jobData.invoice || 0,
-          signature: jobData.signature || null,
-          images: jobData.images || [],
-          documents: jobData.documents || [],
-          checklist: jobData.checklist || []
-        }])
+        .insert([insertData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ DatabaseService: Supabase error:', error);
+        throw error;
+      }
+
+      console.log('✅ DatabaseService: Job created successfully:', data);
 
       return {
         id: data.id,
         title: data.title,
         description: data.description || '',
-        jobType: 'measurement' as const,
+        jobType: jobData.jobType || 'measurement',
         status: data.status,
         customerId: data.customer_id,
         employeeId: data.employee_id || '',
         businessId: data.business_id,
         scheduledDate: data.scheduled_date,
-        scheduledTime: '09:00',
+        scheduledTime: jobData.scheduledTime || '09:00',
         quotation: parseFloat(data.quotation) || 0,
         invoice: parseFloat(data.invoice) || 0,
         signature: data.signature || '',
         images: data.images || [],
         documents: data.documents || [],
         checklist: data.checklist || [],
-        measurements: [],
-        selectedProducts: [],
-        jobHistory: [],
+        measurements: jobData.measurements || [],
+        selectedProducts: jobData.selectedProducts || [],
+        jobHistory: jobData.jobHistory || [],
         createdAt: data.created_at
       };
     } catch (error) {
-      console.error('Error creating job:', error);
+      console.error('❌ DatabaseService: Error creating job:', error);
       throw error;
     }
   }
@@ -363,6 +450,20 @@ export class DatabaseService {
     }
   }
 
+  static async deleteJob(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      throw error;
+    }
+  }
+
   static async getProducts(): Promise<Product[]> {
     try {
       const { data, error } = await supabase
@@ -389,6 +490,84 @@ export class DatabaseService {
     } catch (error) {
       console.error('Error fetching products:', error);
       return [];
+    }
+  }
+
+  static async createProduct(productData: any): Promise<Product> {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .insert([{
+          name: productData.name,
+          category: productData.category,
+          description: productData.description || '',
+          image: productData.image || null,
+          model_3d: productData.model3d || null,
+          ar_model: productData.arModel || null,
+          specifications: productData.specifications || [],
+          price: productData.price || 0,
+          is_active: true
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        name: data.name,
+        category: data.category,
+        description: data.description || '',
+        image: data.image || '',
+        model3d: data.model_3d || '',
+        arModel: data.ar_model || '',
+        specifications: data.specifications || [],
+        price: parseFloat(data.price) || 0,
+        isActive: data.is_active,
+        createdAt: data.created_at
+      };
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+  }
+
+  static async updateProduct(id: string, productData: Partial<Product>): Promise<void> {
+    try {
+      const updateData: any = {};
+      if (productData.name) updateData.name = productData.name;
+      if (productData.category) updateData.category = productData.category;
+      if (productData.description !== undefined) updateData.description = productData.description;
+      if (productData.image !== undefined) updateData.image = productData.image || null;
+      if (productData.model3d !== undefined) updateData.model_3d = productData.model3d || null;
+      if (productData.arModel !== undefined) updateData.ar_model = productData.arModel || null;
+      if (productData.specifications) updateData.specifications = productData.specifications;
+      if (productData.price !== undefined) updateData.price = productData.price;
+      if (productData.isActive !== undefined) updateData.is_active = productData.isActive;
+
+      const { error } = await supabase
+        .from('products')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+  }
+
+  static async deleteProduct(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw error;
     }
   }
 

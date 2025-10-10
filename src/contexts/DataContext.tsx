@@ -428,9 +428,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteJob = async (id: string) => {
     try {
-      // Delete job via multiple backends
-      await saveToMultipleSources('delete', 'job', null, id);
-      
+      if (DatabaseService.isAvailable()) {
+        await DatabaseService.deleteJob(id);
+      } else {
+        await saveToMultipleSources('delete', 'job', null, id);
+      }
+
       setJobs(prev => prev.filter(job => job.id !== id));
       showSuccessMessage('Job deleted successfully!');
     } catch (error) {
@@ -467,13 +470,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateCustomer = async (id: string, customerData: Partial<Customer>) => {
     try {
-      // Update customer via multiple backends
-      await saveToMultipleSources('update', 'customer', customerData, id);
-      
-      setCustomers(prev => prev.map(customer => 
+      if (DatabaseService.isAvailable()) {
+        await DatabaseService.updateCustomer(id, customerData);
+      } else {
+        await saveToMultipleSources('update', 'customer', customerData, id);
+      }
+
+      setCustomers(prev => prev.map(customer =>
         customer.id === id ? { ...customer, ...customerData } : customer
       ));
-      
+
       showSuccessMessage('Customer updated successfully!');
     } catch (error) {
       console.error('Error updating customer:', error);
@@ -483,9 +489,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteCustomer = async (id: string) => {
     try {
-      // Delete customer via multiple backends
-      await saveToMultipleSources('delete', 'customer', null, id);
-      
+      if (DatabaseService.isAvailable()) {
+        await DatabaseService.deleteCustomer(id);
+      } else {
+        await saveToMultipleSources('delete', 'customer', null, id);
+      }
+
       setCustomers(prev => prev.filter(customer => customer.id !== id));
       showSuccessMessage('Customer deleted successfully!');
     } catch (error) {
