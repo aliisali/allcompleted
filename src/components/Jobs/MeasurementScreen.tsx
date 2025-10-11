@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Ruler, Save, ArrowRight, Trash2, Edit, X } from 'lucide-react';
+import { Plus, Ruler, Save, ArrowRight, Trash2, Edit, X, Copy } from 'lucide-react';
 import { Job, JobMeasurement } from '../../types';
 
 interface MeasurementScreenProps {
@@ -15,12 +15,14 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
     width: '',
     height: '',
     notes: '',
-    location: ''
+    location: '',
+    controlType: 'none' as 'chain-cord' | 'wand' | 'none',
+    bracketType: 'top-fix' as 'top-fix' | 'face-fix'
   });
 
   const handleAddMeasurement = () => {
     if (!newMeasurement.windowId || !newMeasurement.width || !newMeasurement.height) {
-      alert('Please fill in all required fields');
+      alert('Please fill in Window ID, Width, and Height');
       return;
     }
 
@@ -31,6 +33,8 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
       height: parseFloat(newMeasurement.height),
       notes: newMeasurement.notes,
       location: newMeasurement.location,
+      controlType: newMeasurement.controlType,
+      bracketType: newMeasurement.bracketType,
       createdAt: new Date().toISOString()
     };
 
@@ -40,8 +44,20 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
       width: '',
       height: '',
       notes: '',
-      location: ''
+      location: '',
+      controlType: 'none',
+      bracketType: 'top-fix'
     });
+  };
+
+  const handleDuplicateMeasurement = (measurement: JobMeasurement) => {
+    const duplicated: JobMeasurement = {
+      ...measurement,
+      id: `measurement-${Date.now()}`,
+      windowId: `${measurement.windowId}-copy`,
+      createdAt: new Date().toISOString()
+    };
+    setMeasurements(prev => [...prev, duplicated]);
   };
 
   const handleDeleteMeasurement = (id: string) => {
@@ -57,7 +73,9 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
       width: measurement.width.toString(),
       height: measurement.height.toString(),
       notes: measurement.notes || '',
-      location: measurement.location || ''
+      location: measurement.location || '',
+      controlType: measurement.controlType || 'none',
+      bracketType: measurement.bracketType || 'top-fix'
     });
   };
 
@@ -74,7 +92,9 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
         width: parseFloat(newMeasurement.width),
         height: parseFloat(newMeasurement.height),
         notes: newMeasurement.notes,
-        location: newMeasurement.location
+        location: newMeasurement.location,
+        controlType: newMeasurement.controlType,
+        bracketType: newMeasurement.bracketType
       } : m
     ));
 
@@ -84,7 +104,9 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
       width: '',
       height: '',
       notes: '',
-      location: ''
+      location: '',
+      controlType: 'none',
+      bracketType: 'top-fix'
     });
   };
 
@@ -95,7 +117,9 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
       width: '',
       height: '',
       notes: '',
-      location: ''
+      location: '',
+      controlType: 'none',
+      bracketType: 'top-fix'
     });
   };
 
@@ -112,6 +136,7 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
       <div className="text-center">
         <h3 className="text-xl font-semibold text-gray-900 mb-2">Window Measurements</h3>
         <p className="text-gray-600">Take accurate measurements for each window</p>
+        <p className="text-sm text-blue-600 mt-1">Add as many measurements as needed</p>
       </div>
 
       {/* Add/Edit Measurement */}
@@ -122,6 +147,7 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
             <button
               onClick={handleCancelEdit}
               className="text-sm text-gray-600 hover:text-gray-800 flex items-center"
+              title="Cancel editing"
             >
               <X className="w-4 h-4 mr-1" />
               Cancel
@@ -183,7 +209,36 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
             />
           </div>
 
-          <div className="md:col-span-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Control Type
+            </label>
+            <select
+              value={newMeasurement.controlType}
+              onChange={(e) => setNewMeasurement({...newMeasurement, controlType: e.target.value as any})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="none">None</option>
+              <option value="chain-cord">Chain & Cord Control</option>
+              <option value="wand">Wand Control</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Bracket Type
+            </label>
+            <select
+              value={newMeasurement.bracketType}
+              onChange={(e) => setNewMeasurement({...newMeasurement, bracketType: e.target.value as any})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="top-fix">T - Top Fix</option>
+              <option value="face-fix">F - Face Fix</option>
+            </select>
+          </div>
+
+          <div className="md:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Notes
             </label>
@@ -221,41 +276,62 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
       {measurements.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <h4 className="font-medium text-gray-900">Recorded Measurements</h4>
+            <h4 className="font-medium text-gray-900">Recorded Measurements ({measurements.length})</h4>
           </div>
           <div className="divide-y divide-gray-200">
             {measurements.map(measurement => (
               <div key={measurement.id} className="p-4 hover:bg-gray-50">
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between">
                   <div className="flex-1">
                     {measurement.location && (
-                      <p className="text-2xl font-bold text-gray-900 mb-2">{measurement.location}</p>
+                      <p className="text-lg font-bold text-gray-900 mb-2">{measurement.location}</p>
                     )}
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         <Ruler className="w-5 h-5 text-blue-600" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-gray-900">Window {measurement.windowId}</p>
                         <p className="text-sm text-gray-600">
                           {measurement.width} × {measurement.height} cm
                         </p>
+                        <div className="flex gap-2 mt-1">
+                          {measurement.controlType && measurement.controlType !== 'none' && (
+                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                              {measurement.controlType === 'chain-cord' ? 'Chain & Cord' : 'Wand'}
+                            </span>
+                          )}
+                          {measurement.bracketType && (
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                              {measurement.bracketType === 'top-fix' ? 'T - Top Fix' : 'F - Face Fix'}
+                            </span>
+                          )}
+                        </div>
                         {measurement.notes && (
                           <p className="text-sm text-gray-500 italic mt-1">{measurement.notes}</p>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 ml-4">
+                    <button
+                      onClick={() => handleDuplicateMeasurement(measurement)}
+                      className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                      title="Duplicate this measurement"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => handleEditMeasurement(measurement)}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit this measurement"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteMeasurement(measurement.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete this measurement"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -273,6 +349,7 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
           onClick={handleComplete}
           disabled={measurements.length === 0}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Save and continue to next step"
         >
           Save Measurements & Continue
           <ArrowRight className="w-4 h-4 ml-2 inline" />

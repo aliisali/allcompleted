@@ -13,6 +13,8 @@ export function ProductSelection({ job, onComplete }: ProductSelectionProps) {
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>(job.selectedProducts || []);
   const [showARCamera, setShowARCamera] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<any>(null);
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   console.log('📦 ProductSelection: Products available:', products.length);
   console.log('📦 ProductSelection: Loading state:', loading);
@@ -80,12 +82,58 @@ export function ProductSelection({ job, onComplete }: ProductSelectionProps) {
 
   const activeProducts = products.filter(p => p.isActive);
 
+  // Get unique categories
+  const categories = ['all', ...new Set(activeProducts.map(p => p.category))];
+
+  // Filter products based on category and search term
+  const filteredProducts = activeProducts.filter(product => {
+    const matchesCategory = filterCategory === 'all' || product.category === filterCategory;
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          product.category.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h3 className="text-xl font-semibold text-gray-900 mb-2">Product Selection</h3>
         <p className="text-gray-600">Show products to customer and demonstrate with AR</p>
       </div>
+
+      {/* Filter and Search */}
+      {!loading && activeProducts.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search Products</label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name or category..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Category</label>
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {categories.map(category => (
+                  <option key={category} value={category}>
+                    {category === 'all' ? 'All Categories' : category}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            Showing {filteredProducts.length} of {activeProducts.length} products
+          </p>
+        </div>
+      )}
 
       {/* Loading State */}
       {loading && (
@@ -113,9 +161,9 @@ export function ProductSelection({ job, onComplete }: ProductSelectionProps) {
       )}
 
       {/* Product Grid */}
-      {!loading && activeProducts.length > 0 && (
+      {!loading && filteredProducts.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {activeProducts.map(product => (
+          {filteredProducts.map(product => (
           <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
             <img
               src={product.image}

@@ -74,6 +74,8 @@ export interface JobMeasurement {
   height: number;
   notes: string;
   location: string;
+  controlType?: 'chain-cord' | 'wand' | 'none';
+  bracketType?: 'top-fix' | 'face-fix';
   createdAt: string;
 }
 
