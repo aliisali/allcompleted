@@ -506,6 +506,8 @@ export class DatabaseService {
 
   static async createProduct(productData: any): Promise<Product> {
     try {
+      console.log('Creating product with data:', productData);
+
       const { data, error } = await supabase
         .from('products')
         .insert([{
@@ -520,9 +522,18 @@ export class DatabaseService {
           is_active: true
         }])
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error creating product:', error);
+        throw new Error(`Failed to create product: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('No data returned from product creation');
+      }
+
+      console.log('Product created successfully:', data);
 
       return {
         id: data.id,
@@ -537,9 +548,9 @@ export class DatabaseService {
         isActive: data.is_active,
         createdAt: data.created_at
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating product:', error);
-      throw error;
+      throw new Error(error.message || 'Failed to create product');
     }
   }
 
