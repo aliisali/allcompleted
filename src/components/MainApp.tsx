@@ -35,6 +35,7 @@ export function MainApp() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const renderContent = () => {
     // Admin-specific features
@@ -118,13 +119,43 @@ export function MainApp() {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <Sidebar 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab}
-        isMinimized={sidebarMinimized}
-        onToggleMinimize={() => setSidebarMinimized(!sidebarMinimized)}
-      />
-      <main className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 transition-all duration-300">
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative z-50 transition-transform duration-300`}>
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            setMobileMenuOpen(false);
+          }}
+          isMinimized={sidebarMinimized}
+          onToggleMinimize={() => setSidebarMinimized(!sidebarMinimized)}
+        />
+      </div>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 transition-all duration-300 w-full">
+        {/* Mobile Header */}
+        <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div className="font-semibold text-gray-900">BlindsCloud</div>
+          <div className="w-10"></div>
+        </div>
+
         {renderContent()}
       </main>
     </div>
