@@ -10,6 +10,7 @@ export function ProductManagement() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>('');
   const [newProduct, setNewProduct] = useState({
     name: '',
     category: '',
@@ -18,6 +19,24 @@ export function ProductManagement() {
     specifications: [''],
     price: ''
   });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setNewProduct({...newProduct, image: base64String});
+        setImagePreview(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const categories = ['Window Blinds', 'Smart Blinds', 'Venetian Blinds', 'Roller Blinds', 'Vertical Blinds', 'Roman Blinds'];
 
@@ -58,6 +77,7 @@ export function ProductManagement() {
       });
       
       setShowCreateModal(false);
+      setImagePreview('');
     } catch (error) {
       console.error('Error creating product:', error);
     }
@@ -95,9 +115,10 @@ export function ProductManagement() {
         };
         
         await updateProduct(selectedProduct.id, updatedData);
-        
+
         setShowEditModal(false);
         setSelectedProduct(null);
+        setImagePreview('');
         setNewProduct({
           name: '',
           category: '',
@@ -337,16 +358,56 @@ export function ProductManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Image URL *
+                  Product Image *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={newProduct.image}
-                  onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://example.com/image.jpg"
-                />
+
+                <div className="space-y-3">
+                  {/* File Upload */}
+                  <div className="flex items-center space-x-3">
+                    <label className="flex-1 cursor-pointer">
+                      <div className="flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
+                        <Upload className="w-5 h-5 text-gray-400 mr-2" />
+                        <span className="text-sm text-gray-600">Upload from device</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {/* OR Text */}
+                  <div className="flex items-center">
+                    <div className="flex-1 border-t border-gray-300"></div>
+                    <span className="px-3 text-sm text-gray-500">OR</span>
+                    <div className="flex-1 border-t border-gray-300"></div>
+                  </div>
+
+                  {/* URL Input */}
+                  <input
+                    type="url"
+                    value={newProduct.image.startsWith('data:') ? '' : newProduct.image}
+                    onChange={(e) => {
+                      setNewProduct({...newProduct, image: e.target.value});
+                      setImagePreview('');
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://example.com/image.jpg"
+                  />
+
+                  {/* Image Preview */}
+                  {(imagePreview || newProduct.image) && (
+                    <div className="mt-3">
+                      <img
+                        src={imagePreview || newProduct.image}
+                        alt="Preview"
+                        className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -538,15 +599,56 @@ export function ProductManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Image URL *
+                  Product Image *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={newProduct.image}
-                  onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+
+                <div className="space-y-3">
+                  {/* File Upload */}
+                  <div className="flex items-center space-x-3">
+                    <label className="flex-1 cursor-pointer">
+                      <div className="flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
+                        <Upload className="w-5 h-5 text-gray-400 mr-2" />
+                        <span className="text-sm text-gray-600">Upload from device</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {/* OR Text */}
+                  <div className="flex items-center">
+                    <div className="flex-1 border-t border-gray-300"></div>
+                    <span className="px-3 text-sm text-gray-500">OR</span>
+                    <div className="flex-1 border-t border-gray-300"></div>
+                  </div>
+
+                  {/* URL Input */}
+                  <input
+                    type="url"
+                    value={newProduct.image.startsWith('data:') ? '' : newProduct.image}
+                    onChange={(e) => {
+                      setNewProduct({...newProduct, image: e.target.value});
+                      setImagePreview('');
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://example.com/image.jpg"
+                  />
+
+                  {/* Image Preview */}
+                  {(imagePreview || newProduct.image) && (
+                    <div className="mt-3">
+                      <img
+                        src={imagePreview || newProduct.image}
+                        alt="Preview"
+                        className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>

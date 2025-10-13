@@ -338,15 +338,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Business management
   const addBusiness = async (businessData: Omit<Business, 'id' | 'createdAt'>) => {
     try {
-      // Create business via multiple backends (this already handles localStorage)
-      await saveToMultipleSources('create', 'business', businessData);
+      let newBusiness: Business;
 
-      // Get the newly created business from localStorage (don't create again)
-      const businesses = LocalStorageService.getBusinesses();
-      const newBusiness = businesses[businesses.length - 1]; // Get the last created business
+      if (DatabaseService.isAvailable()) {
+        console.log('✅ Using Supabase to create business');
+        newBusiness = await DatabaseService.createBusiness(businessData);
+      } else {
+        console.log('📝 Using localStorage to create business');
+        await saveToMultipleSources('create', 'business', businessData);
+        const businesses = LocalStorageService.getBusinesses();
+        newBusiness = businesses[businesses.length - 1];
+      }
 
       setBusinesses(prev => [...prev, newBusiness]);
-
       showSuccessMessage('Business created successfully!');
     } catch (error) {
       console.error('Error creating business:', error);
@@ -356,13 +360,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateBusiness = async (id: string, businessData: Partial<Business>) => {
     try {
-      // Update business via multiple backends
-      await saveToMultipleSources('update', 'business', businessData, id);
-      
-      setBusinesses(prev => prev.map(business => 
+      if (DatabaseService.isAvailable()) {
+        await DatabaseService.updateBusiness(id, businessData);
+      } else {
+        await saveToMultipleSources('update', 'business', businessData, id);
+      }
+
+      setBusinesses(prev => prev.map(business =>
         business.id === id ? { ...business, ...businessData } : business
       ));
-      
       showSuccessMessage('Business updated successfully!');
     } catch (error) {
       console.error('Error updating business:', error);
@@ -372,9 +378,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteBusiness = async (id: string) => {
     try {
-      // Delete business via multiple backends
-      await saveToMultipleSources('delete', 'business', null, id);
-      
+      if (DatabaseService.isAvailable()) {
+        await DatabaseService.deleteBusiness(id);
+      } else {
+        await saveToMultipleSources('delete', 'business', null, id);
+      }
+
       setBusinesses(prev => prev.filter(business => business.id !== id));
       showSuccessMessage('Business deleted successfully!');
     } catch (error) {
