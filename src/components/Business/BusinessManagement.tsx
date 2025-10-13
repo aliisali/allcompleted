@@ -3,7 +3,7 @@ import { Plus, Search, Filter, CreditCard as Edit, Trash2, Building2, MapPin, Ph
 import { useData } from '../../contexts/DataContext';
 
 export function BusinessManagement() {
-  const { businesses, addBusiness, deleteBusiness } = useData();
+  const { businesses, addBusiness, deleteBusiness, updateBusiness } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showFeaturesModal, setShowFeaturesModal] = useState(false);
@@ -13,7 +13,8 @@ export function BusinessManagement() {
     address: '',
     phone: '',
     email: '',
-    adminId: ''
+    adminId: '',
+    adminPassword: ''
   });
 
 
@@ -43,7 +44,8 @@ export function BusinessManagement() {
       address: '',
       phone: '',
       email: '',
-      adminId: ''
+      adminId: '',
+      adminPassword: ''
     });
     
     setShowCreateModal(false);
@@ -258,6 +260,24 @@ export function BusinessManagement() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Initial Admin Password *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={newBusiness.adminPassword}
+                  onChange={(e) => setNewBusiness({...newBusiness, adminPassword: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter initial password"
+                  minLength={8}
+                />
+                <p className="text-sm text-gray-600 mt-1">
+                  Password must be at least 8 characters. Admin can change this on first login.
+                </p>
+              </div>
+
               <div className="flex justify-end space-x-3 pt-6">
                 <button
                   type="button"
@@ -314,10 +334,18 @@ export function BusinessManagement() {
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={selectedBusiness.features.includes(feature.id)}
-                      onChange={(e) => {
-                        // Feature toggle functionality would be implemented here
-                        console.log('Toggle feature:', feature.id, e.target.checked);
+                      checked={selectedBusiness.features?.includes(feature.id) || false}
+                      onChange={async (e) => {
+                        const newFeatures = e.target.checked
+                          ? [...(selectedBusiness.features || []), feature.id]
+                          : (selectedBusiness.features || []).filter((f: string) => f !== feature.id);
+
+                        try {
+                          await updateBusiness(selectedBusiness.id, { features: newFeatures });
+                          setSelectedBusiness({ ...selectedBusiness, features: newFeatures });
+                        } catch (error) {
+                          console.error('Error updating features:', error);
+                        }
                       }}
                       className="sr-only peer"
                     />
