@@ -26,6 +26,7 @@ export default function UpdateARViewer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const loadedImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   useEffect(() => {
     loadSavedData();
@@ -193,7 +194,7 @@ export default function UpdateARViewer() {
     const canvas = canvasRef.current;
     const video = videoRef.current;
 
-    if (!canvas || !video) return;
+    if (!canvas || !video || !video.videoWidth || !video.videoHeight) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -250,8 +251,19 @@ export default function UpdateARViewer() {
   const drawARItem = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     if (!selectedItem) return;
 
-    const img = new Image();
-    img.src = selectedItem.image;
+    let img = loadedImagesRef.current.get(selectedItem.image);
+
+    if (!img) {
+      img = new Image();
+      img.src = selectedItem.image;
+      img.onload = () => {
+        loadedImagesRef.current.set(selectedItem.image, img!);
+      };
+      loadedImagesRef.current.set(selectedItem.image, img);
+      return;
+    }
+
+    if (!img.complete) return;
 
     const x = (position.x / 100) * width;
     const y = (position.y / 100) * height;
