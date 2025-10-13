@@ -506,36 +506,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Product management
   const addProduct = async (productData: Omit<Product, 'id' | 'createdAt'>) => {
     try {
-      // Create product via multiple backends (this already handles localStorage)
-      await saveToMultipleSources('create', 'product', productData);
+      let newProduct: Product;
 
-      // Get the newly created product from localStorage (don't create again)
-      const products = LocalStorageService.getProducts();
-      const newProduct = products[products.length - 1]; // Get the last created product
+      if (DatabaseService.isAvailable()) {
+        console.log('✅ Using Supabase to create product');
+        newProduct = await DatabaseService.createProduct(productData);
+      } else {
+        console.log('📝 Using localStorage to create product');
+        await saveToMultipleSources('create', 'product', productData);
+        const products = LocalStorageService.getProducts();
+        newProduct = products[products.length - 1];
+      }
 
       setProducts(prev => [...prev, newProduct]);
-
       showSuccessMessage('Product added successfully!');
     } catch (error) {
-      console.error('Error creating product:', error);
-      showErrorMessage('Failed to create product.');
+      console.error('Error adding product:', error);
+      showErrorMessage('Failed to add product.');
     }
   };
 
   const updateProduct = async (id: string, productData: Partial<Product>) => {
     try {
-      // Update product via multiple backends
-      await saveToMultipleSources('update', 'product', productData, id);
-      
-      const originalProduct = products.find(p => p.id === id);
-      if (originalProduct) {
-        const updatedProduct = { ...originalProduct, ...productData };
-
-        setProducts(prev => prev.map(product =>
-          product.id === id ? updatedProduct : product
-        ));
+      if (DatabaseService.isAvailable()) {
+        await DatabaseService.updateProduct(id, productData);
+      } else {
+        await saveToMultipleSources('update', 'product', productData, id);
       }
-      
+
+      setProducts(prev => prev.map(product =>
+        product.id === id ? { ...product, ...productData } : product
+      ));
       showSuccessMessage('Product updated successfully!');
     } catch (error) {
       console.error('Error updating product:', error);
@@ -545,9 +546,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteProduct = async (id: string) => {
     try {
-      // Delete product via multiple backends
-      await saveToMultipleSources('delete', 'product', null, id);
-      
+      if (DatabaseService.isAvailable()) {
+        await DatabaseService.deleteProduct(id);
+      } else {
+        await saveToMultipleSources('delete', 'product', null, id);
+      }
+
       setProducts(prev => prev.filter(product => product.id !== id));
       showSuccessMessage('Product deleted successfully!');
     } catch (error) {
