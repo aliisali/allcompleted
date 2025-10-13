@@ -374,6 +374,15 @@ export default function UpdateARViewer() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-white">AR Camera View</h2>
                 <div className="flex items-center space-x-2">
+                  {cameraActive && selectedItem && (
+                    <button
+                      onClick={captureARScene}
+                      className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg flex items-center space-x-2 animate-pulse"
+                    >
+                      <Download className="w-5 h-5" />
+                      <span className="font-semibold">Capture Screenshot</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowGrid(!showGrid)}
                     className={`px-3 py-2 rounded-lg transition-colors ${
@@ -398,10 +407,16 @@ export default function UpdateARViewer() {
 
               <div className="relative bg-black rounded-lg overflow-hidden" style={{ height: '500px' }}>
                 {!cameraActive ? (
-                  <div className="h-full flex flex-col items-center justify-center">
-                    <Camera className="w-16 h-16 text-gray-400 mb-4" />
-                    <p className="text-gray-300 text-lg font-medium">Camera is off</p>
-                    <p className="text-gray-500 text-sm mt-2">Click "Start Camera" to begin AR preview</p>
+                  <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                    <Camera className="w-20 h-20 text-blue-400 mb-6" />
+                    <p className="text-white text-2xl font-bold mb-3">AR Camera Ready</p>
+                    <div className="space-y-2 text-gray-300 text-sm max-w-md">
+                      <p>📸 <strong>Step 1:</strong> Click "Start Camera" above</p>
+                      <p>🖼️ <strong>Step 2:</strong> Upload AR model images on the right</p>
+                      <p>👆 <strong>Step 3:</strong> Click an image to place it in AR view</p>
+                      <p>🎮 <strong>Step 4:</strong> Adjust scale, rotation, and position</p>
+                      <p>💾 <strong>Step 5:</strong> Click "Capture Screenshot" to save</p>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -426,36 +441,28 @@ export default function UpdateARViewer() {
               </div>
 
               {cameraActive && selectedItem && (
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setScale(Math.max(0.1, scale - 0.1))}
-                      className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-                    >
-                      <ZoomOut className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setScale(Math.min(3, scale + 0.1))}
-                      className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-                    >
-                      <ZoomIn className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setScale(1);
-                        setRotation(0);
-                        setPosition({ x: 50, y: 50 });
-                      }}
-                      className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </button>
-                  </div>
+                <div className="mt-4 flex items-center justify-center space-x-2">
                   <button
-                    onClick={captureARScene}
-                    className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg"
+                    onClick={() => setScale(Math.max(0.1, scale - 0.1))}
+                    className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
                   >
-                    Capture Scene
+                    <ZoomOut className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setScale(Math.min(3, scale + 0.1))}
+                    className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                  >
+                    <ZoomIn className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setScale(1);
+                      setRotation(0);
+                      setPosition({ x: 50, y: 50 });
+                    }}
+                    className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                  >
+                    <RotateCcw className="w-5 h-5" />
                   </button>
                 </div>
               )}
@@ -526,13 +533,7 @@ export default function UpdateARViewer() {
           <div className="space-y-6">
             <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">AR Items</h3>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-                >
-                  <Upload className="w-4 h-4" />
-                </button>
+                <h3 className="text-lg font-semibold text-white">AR Models</h3>
               </div>
 
               <input
@@ -544,16 +545,19 @@ export default function UpdateARViewer() {
                 className="hidden"
               />
 
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full mb-4 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg transition-all shadow-lg flex items-center justify-center space-x-2"
+              >
+                <Upload className="w-5 h-5" />
+                <span className="font-semibold">Upload AR Models</span>
+              </button>
+
               {uploadedImages.length === 0 ? (
                 <div className="text-center py-8">
                   <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-300 text-sm">No images uploaded</p>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="mt-3 text-blue-400 hover:text-blue-300 text-sm"
-                  >
-                    Upload images
-                  </button>
+                  <p className="text-gray-300 text-sm">No AR models uploaded</p>
+                  <p className="text-gray-500 text-xs mt-2">Upload images to use in AR view</p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
