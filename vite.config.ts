@@ -16,12 +16,36 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1500,
+    sourcemap: false,
+    minify: 'esbuild',
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          lucide: ['lucide-react']
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor';
+            }
+            if (id.includes('lucide-react')) {
+              return 'lucide';
+            }
+            if (id.includes('@supabase')) {
+              return 'supabase';
+            }
+            return 'vendor-libs';
+          }
+          if (id.includes('/components/Admin/')) {
+            return 'admin';
+          }
+          if (id.includes('/components/Dashboard/')) {
+            return 'dashboards';
+          }
+          if (id.includes('/components/Jobs/')) {
+            return 'jobs';
+          }
+          if (id.includes('/components/ARModule/')) {
+            return 'ar-modules';
+          }
         }
       }
     }
