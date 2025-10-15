@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Cuboid as Cube, RotateCcw, ZoomIn, ZoomOut, Move3d as Move3D, Eye, Download, Share2, Settings, Play, Pause } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { ThreeDScene } from './ThreeDScene';
 
 interface Model3D {
   id: string;
@@ -142,7 +143,7 @@ export function Model3DViewer() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">3D Model Viewer</h1>
-          <p className="text-gray-600 mt-2">View and interact with 3D models in various formats (.max, .fbx, .gltf, .glb)</p>
+          <p className="text-gray-600 mt-2">Interactive 3D rendering powered by CSS 3D transforms - Drag to rotate, scroll to zoom</p>
         </div>
         <button
           onClick={loadAvailableModels}
@@ -236,78 +237,34 @@ export function Model3DViewer() {
               </div>
 
               {/* 3D Viewer Area */}
-              <div className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 rounded-lg h-96 mb-6 overflow-hidden">
-                {/* 3D Model Preview - showing original image as preview */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <img
-                    src={selectedModel.originalImage}
-                    alt={selectedModel.name}
-                    className="max-w-full max-h-full object-contain opacity-90"
-                  />
-                </div>
-
-                {/* Grid overlay for 3D effect */}
-                <div className="absolute inset-0 opacity-20 pointer-events-none">
-                  <div className="w-full h-full" style={{
-                    backgroundImage: 'linear-gradient(rgba(59, 130, 246, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.3) 1px, transparent 1px)',
-                    backgroundSize: '50px 50px'
-                  }}></div>
-                </div>
+              <div className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 rounded-lg h-[600px] mb-6 overflow-hidden">
+                {/* Interactive 3D Scene */}
+                <ThreeDScene
+                  imageUrl={selectedModel.originalImage}
+                  autoRotate={viewerSettings.autoRotate}
+                />
 
                 {/* Status Badge */}
-                <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full flex items-center space-x-1">
+                <div className="absolute top-4 left-4 pointer-events-none z-10">
+                  <span className="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full flex items-center space-x-1 shadow-lg">
                     <Eye className="w-3 h-3" />
-                    <span>Interactive Preview Mode</span>
+                    <span>Interactive 3D Mode</span>
                   </span>
                 </div>
 
                 {/* Model info overlay */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-6">
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-6 pointer-events-none z-10">
                   <p className="text-white font-semibold text-lg">{selectedModel.name}</p>
                   <p className="text-white/80 text-sm mt-1">
                     Style: {selectedModel.settings.style} | Quality: {selectedModel.settings.quality} | Depth: {selectedModel.settings.depth}
                   </p>
-                  <p className="text-blue-300 text-xs mt-2">
-                    Ready for 3D rendering with .max, .fbx, .gltf, .glb formats
+                  <p className="text-blue-300 text-xs mt-2 flex items-center space-x-2">
+                    <span>✨ CSS 3D Transform Engine</span>
+                    <span>•</span>
+                    <span>Drag to rotate</span>
+                    <span>•</span>
+                    <span>Scroll to zoom</span>
                   </p>
-                </div>
-
-                {/* Viewer Controls */}
-                <div className="absolute top-4 right-4 flex flex-col space-y-2">
-                  <button
-                    className="p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition-all hover:scale-110"
-                    title="Zoom In"
-                  >
-                    <ZoomIn className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <button
-                    className="p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition-all hover:scale-110"
-                    title="Zoom Out"
-                  >
-                    <ZoomOut className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <button
-                    className="p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition-all hover:scale-110"
-                    title="Reset View"
-                  >
-                    <RotateCcw className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <button
-                    className="p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition-all hover:scale-110"
-                    title="Pan View"
-                  >
-                    <Move3D className="w-4 h-4 text-gray-700" />
-                  </button>
-                </div>
-
-                {/* Interactive Instructions */}
-                <div className="absolute bottom-20 left-4 bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-lg text-xs border border-white/20">
-                  <div className="flex items-center space-x-4">
-                    <span>🖱️ Rotate</span>
-                    <span>🔍 Zoom</span>
-                    <span>✋ Pan</span>
-                  </div>
                 </div>
               </div>
 
