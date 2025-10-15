@@ -508,24 +508,29 @@ export class DatabaseService {
     try {
       console.log('Creating product with data:', productData);
 
+      const insertData = {
+        name: productData.name?.trim() || 'Unnamed Product',
+        category: productData.category?.trim() || 'Uncategorized',
+        description: productData.description?.trim() || '',
+        image: productData.image?.trim() || '',
+        model_3d: productData.model3d?.trim() || null,
+        ar_model: productData.arModel?.trim() || null,
+        specifications: Array.isArray(productData.specifications) ? productData.specifications.filter((s: string) => s.trim()) : [],
+        price: parseFloat(productData.price) || 0,
+        is_active: true
+      };
+
+      console.log('Inserting product data:', insertData);
+
       const { data, error } = await supabase
         .from('products')
-        .insert([{
-          name: productData.name,
-          category: productData.category,
-          description: productData.description || '',
-          image: productData.image || null,
-          model_3d: productData.model3d || null,
-          ar_model: productData.arModel || null,
-          specifications: productData.specifications || [],
-          price: productData.price || 0,
-          is_active: true
-        }])
+        .insert([insertData])
         .select()
         .maybeSingle();
 
       if (error) {
         console.error('Supabase error creating product:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         throw new Error(`Failed to create product: ${error.message}`);
       }
 

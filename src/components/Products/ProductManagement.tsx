@@ -55,18 +55,31 @@ export function ProductManagement() {
 
   const handleCreateProductAsync = async () => {
     try {
+      // Validation
+      if (!newProduct.name || newProduct.name.trim() === '') {
+        alert('Product name is required');
+        return;
+      }
+
+      if (!newProduct.category || newProduct.category.trim() === '') {
+        alert('Product category is required');
+        return;
+      }
+
       const productData = {
-        name: newProduct.name,
-        category: newProduct.category,
-        description: newProduct.description,
-        image: newProduct.image,
+        name: newProduct.name.trim(),
+        category: newProduct.category.trim(),
+        description: newProduct.description.trim(),
+        image: newProduct.image.trim(),
         specifications: newProduct.specifications.filter(spec => spec.trim() !== ''),
         price: parseFloat(newProduct.price) || 0,
         isActive: true
       };
-      
+
+      console.log('Creating product with data:', productData);
+
       await addProduct(productData);
-      
+
       setNewProduct({
         name: '',
         category: '',
@@ -75,11 +88,12 @@ export function ProductManagement() {
         specifications: [''],
         price: ''
       });
-      
+
       setShowCreateModal(false);
       setImagePreview('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating product:', error);
+      alert(`Failed to add product: ${error.message || 'Unknown error'}`);
     }
   };
 
