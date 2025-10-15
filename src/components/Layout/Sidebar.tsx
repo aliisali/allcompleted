@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Building2, Calendar, ClipboardList, FileText, Settings, BarChart3, Camera, Mail, Bell, Package, LogOut, Headphones, Code, Shield, Cuboid as Cube, ChevronLeft, ChevronRight, Menu, Clock, Sparkles } from 'lucide-react';
+import { Users, Building2, Calendar, ClipboardList, FileText, Settings, BarChart3, Camera, Mail, Bell, Package, LogOut, Headphones, Code, Shield, Cuboid as Cube, ChevronLeft, ChevronRight, Menu, Clock, Sparkles, CreditCard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useModulePermissions } from '../../hooks/useModulePermissions';
 import { Logo } from './Logo';
@@ -48,6 +48,7 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
           { id: 'reports', label: 'Reports', icon: FileText },
           { id: 'html-manager', label: 'HTML Manager', icon: Code },
           { id: 'email-manager', label: 'Email Manager', icon: Mail },
+          { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
         ];
       case 'business':
         return [
@@ -57,6 +58,7 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
           { id: 'calendar', label: 'Calendar', icon: Calendar },
           { id: 'reports', label: 'Reports', icon: FileText },
           { id: 'customers', label: 'Customers', icon: Building2 },
+          { id: 'subscription', label: 'Subscription', icon: CreditCard },
           ...(hasModuleAccess('ar-camera') ? [{ id: 'ar-camera', label: 'AR Camera', icon: Headphones }] : []),
           { id: 'job-assignment', label: 'Job Assignment', icon: Users },
           { id: '3d-viewer', label: '3D Model Viewer', icon: Cube },

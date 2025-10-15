@@ -30,6 +30,9 @@ import PermissionManagementWrapper from './Permissions/PermissionManagement';
 import { BusinessSettingsManager } from './Admin/BusinessSettings';
 import { JobAssignmentCenter } from './Business/JobAssignment';
 import { WorkingHoursManager } from './Employee/WorkingHours';
+import { SubscriptionManagement } from './Admin/SubscriptionManagement';
+import { SubscriptionPage } from './Business/SubscriptionPage';
+import { SubscriptionBanner } from './Layout/SubscriptionBanner';
 
 export function MainApp() {
   const { user } = useAuth();
@@ -56,6 +59,7 @@ export function MainApp() {
         case 'model-permissions': return <ModelPermissions />;
         case 'email-manager': return <EmailManager />;
         case 'business-settings': return <BusinessSettingsManager />;
+        case 'subscriptions': return <SubscriptionManagement />;
         default: return <AdminDashboard />;
       }
     }
@@ -69,6 +73,7 @@ export function MainApp() {
         case 'calendar': return <CalendarView />;
         case 'reports': return <ReportsManagement />;
         case 'customers': return <CustomerManagement />;
+        case 'subscription': return <SubscriptionPage />;
         case 'ar-camera': return <ARCameraModule />;
         case '3d-viewer': return <Model3DViewer />;
         case 'job-assignment': return <JobAssignmentCenter />;
@@ -118,46 +123,50 @@ export function MainApp() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <SubscriptionBanner onNavigateToSubscription={() => setActiveTab('subscription')} />
 
-      {/* Sidebar */}
-      <div className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative z-50 transition-transform duration-300`}>
-        <Sidebar
-          activeTab={activeTab}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            setMobileMenuOpen(false);
-          }}
-          isMinimized={sidebarMinimized}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        <div className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative z-50 transition-transform duration-300`}>
+          <Sidebar
+            activeTab={activeTab}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              setMobileMenuOpen(false);
+            }}
+            isMinimized={sidebarMinimized}
           onToggleMinimize={() => setSidebarMinimized(!sidebarMinimized)}
         />
       </div>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 transition-all duration-300 w-full">
-        {/* Mobile Header */}
-        <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <div className="font-semibold text-gray-900">BlindsCloud</div>
-          <div className="w-10"></div>
-        </div>
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 transition-all duration-300 w-full">
+          {/* Mobile Header */}
+          <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="font-semibold text-gray-900">BlindsCloud</div>
+            <div className="w-10"></div>
+          </div>
 
-        {renderContent()}
-      </main>
+          {renderContent()}
+        </main>
+      </div>
     </div>
   );
 }
