@@ -15,17 +15,25 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
   const { user, logout } = useAuth();
   const { hasModuleAccess } = useModulePermissions();
 
-  // Check if user has VR View permission
-  const hasVRViewPermission = () => {
+  // Check if user has AR Camera permission
+  const hasARCameraPermission = () => {
+    if (!user) return false;
+
+    // Admin always has access
+    if (user.role === 'admin') return true;
+
     // Check new AR Camera module access
     if (hasModuleAccess('ar-camera')) {
       return true;
     }
-    
-    // Fallback to old VR View permission system
-    if (user?.role === 'employee') {
-      return user.permissions.includes('vr_view') || user.permissions.includes('all');
+
+    // Fallback to old permission systems
+    if (user.permissions.includes('ar_camera_access') ||
+        user.permissions.includes('vr_view') ||
+        user.permissions.includes('all')) {
+      return true;
     }
+
     return false;
   };
 
@@ -59,9 +67,9 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
           { id: 'reports', label: 'Reports', icon: FileText },
           { id: 'customers', label: 'Customers', icon: Building2 },
           { id: 'subscription', label: 'Subscription', icon: CreditCard },
-          ...(hasModuleAccess('ar-camera') ? [{ id: 'ar-camera', label: 'AR Camera', icon: Headphones }] : []),
+          ...(hasARCameraPermission() ? [{ id: 'ar-camera', label: 'AR Camera', icon: Headphones }] : []),
           { id: 'job-assignment', label: 'Job Assignment', icon: Users },
-          { id: '3d-viewer', label: '3D Model Viewer', icon: Cube },
+          { id: 'products', label: 'Product Viewer', icon: Package },
         ];
       case 'employee':
         return [
@@ -70,11 +78,10 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
           { id: 'calendar', label: 'Calendar', icon: Calendar },
           { id: 'tasks', label: 'Tasks', icon: FileText },
           { id: 'camera', label: 'Capture', icon: Camera },
-          ...(hasVRViewPermission() ? [{ id: 'ar-camera', label: 'AR Camera', icon: Headphones }] : []),
+          ...(hasARCameraPermission() ? [{ id: 'ar-camera', label: 'AR Camera', icon: Headphones }] : []),
           { id: 'emails', label: 'Emails', icon: Mail },
           { id: 'notifications', label: 'Notifications', icon: Bell },
           { id: 'products', label: 'Product Viewer', icon: Package },
-          { id: '3d-viewer', label: '3D Model Viewer', icon: Cube },
           { id: 'working-hours', label: 'Working Hours', icon: Clock },
         ];
       default:

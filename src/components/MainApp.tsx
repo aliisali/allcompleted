@@ -75,8 +75,8 @@ export function MainApp() {
         case 'customers': return <CustomerManagement />;
         case 'subscription': return <SubscriptionPage />;
         case 'ar-camera': return <ARCameraModule />;
-        case '3d-viewer': return <Model3DViewer />;
         case 'job-assignment': return <JobAssignmentCenter />;
+        case 'products': return <ProductVisualizer />;
         default: return <BusinessDashboard />;
       }
     }
