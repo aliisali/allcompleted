@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Package, Camera, Check, ArrowRight } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { Job, SelectedProduct } from '../../types';
+import { ARCameraCapture } from '../ARModule/ARCameraCapture';
 
 interface ProductSelectionProps {
   job: Job;
@@ -268,33 +269,12 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
 
       {/* AR Camera Modal */}
       {showARCamera && currentProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-4xl w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              AR Demo: {currentProduct.name}
-            </h3>
-            <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-              <div className="text-center">
-                <Camera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">AR Camera would be active here</p>
-                <button
-                  onClick={() => handleARScreenshot('mock-screenshot-url')}
-                  className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  📸 Capture Screenshot
-                </button>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowARCamera(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <ARCameraCapture
+          title={`AR Demo: ${currentProduct.name}`}
+          overlayImage={currentProduct.image}
+          onCapture={handleARScreenshot}
+          onClose={() => setShowARCamera(false)}
+        />
       )}
 
       {/* Navigation Buttons */}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Ruler, Save, ArrowRight, Trash2, Edit, X, Copy, Camera } from 'lucide-react';
 import { Job, JobMeasurement } from '../../types';
+import { ARCameraCapture } from '../ARModule/ARCameraCapture';
 
 interface MeasurementScreenProps {
   job: Job;
@@ -356,116 +357,14 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
 
       {/* AR Camera Modal */}
       {showARCamera && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">AR Measurement Assistant</h3>
-              <button
-                onClick={() => setShowARCamera(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="aspect-video bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center relative overflow-hidden">
-                <div className="text-center z-10">
-                  <Camera className="w-16 h-16 text-purple-600 mx-auto mb-4" />
-                  <p className="text-gray-700 font-medium mb-2">AR Camera View</p>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Point camera at window to measure dimensions
-                  </p>
-                  <div className="flex items-center justify-center gap-3">
-                    <button
-                      onClick={() => {
-                        const fakeImageUrl = `https://via.placeholder.com/800x600/6366f1/ffffff?text=AR+Measurement+${Date.now()}`;
-                        setArImageUrl(fakeImageUrl);
-                        alert('AR measurement captured! This would use device AR capabilities.');
-                      }}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                    >
-                      <Camera className="w-4 h-4 mr-2 inline" />
-                      Capture Measurement
-                    </button>
-                    <button
-                      onClick={() => {
-                        alert('Auto-detect would use AR to automatically measure window dimensions');
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <Ruler className="w-4 h-4 mr-2 inline" />
-                      Auto-Detect Dimensions
-                    </button>
-                  </div>
-                </div>
-
-                {/* AR Overlay Grid */}
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0">
-                    {Array.from({ length: 9 }).map((_, i) => (
-                      <div key={i} className="border border-white/20" />
-                    ))}
-                  </div>
-                  {/* AR Measurement Indicators */}
-                  <div className="absolute top-1/2 left-1/4 w-1/2 border-2 border-purple-500 rounded-lg">
-                    <div className="absolute -top-6 left-0 bg-purple-600 text-white text-xs px-2 py-1 rounded">
-                      Width: 120cm
-                    </div>
-                  </div>
-                  <div className="absolute top-1/4 left-1/2 h-1/2 border-2 border-purple-500 rounded-lg">
-                    <div className="absolute -left-16 top-0 bg-purple-600 text-white text-xs px-2 py-1 rounded">
-                      Height: 150cm
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {arImageUrl && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-green-800 font-medium mb-2">✓ AR Measurement Captured</p>
-                  <p className="text-sm text-green-700">Image reference saved for this measurement</p>
-                </div>
-              )}
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2">AR Measurement Features:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Point camera at window frame to auto-detect dimensions</li>
-                  <li>• Real-time measurement display with AR overlay</li>
-                  <li>• Capture reference photos with measurements</li>
-                  <li>• Automatic conversion to centimeters</li>
-                  <li>• Visual guides for accurate measurement</li>
-                </ul>
-              </div>
-
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowARCamera(false);
-                    setArImageUrl(null);
-                  }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => {
-                    if (arImageUrl) {
-                      alert('AR measurements would be automatically added to the form');
-                      setShowARCamera(false);
-                    } else {
-                      alert('Please capture a measurement first');
-                    }
-                  }}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  Apply to Form
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ARCameraCapture
+          title="AR Measurement Assistant"
+          onCapture={(imageUrl) => {
+            setArImageUrl(imageUrl);
+            setShowARCamera(false);
+          }}
+          onClose={() => setShowARCamera(false)}
+        />
       )}
 
       {/* Continue Button */}
