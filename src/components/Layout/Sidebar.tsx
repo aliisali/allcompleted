@@ -123,7 +123,7 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
         )}
       </div>
       
-      <nav className={`flex-1 ${isMinimized ? 'p-2' : 'p-4'} transition-all duration-300`}>
+      <nav className={`flex-1 ${isMinimized ? 'p-2' : 'p-4'} transition-all duration-300 overflow-y-auto`}>
         <ul className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
