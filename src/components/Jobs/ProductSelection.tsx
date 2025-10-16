@@ -6,9 +6,10 @@ import { Job, SelectedProduct } from '../../types';
 interface ProductSelectionProps {
   job: Job;
   onComplete: (data: { selectedProducts: SelectedProduct[] }) => void;
+  onBack?: () => void;
 }
 
-export function ProductSelection({ job, onComplete }: ProductSelectionProps) {
+export function ProductSelection({ job, onComplete, onBack }: ProductSelectionProps) {
   const { products, loading } = useData();
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>(job.selectedProducts || []);
   const [showARCamera, setShowARCamera] = useState(false);
@@ -94,7 +95,7 @@ export function ProductSelection({ job, onComplete }: ProductSelectionProps) {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
       <div className="text-center">
         <h3 className="text-xl font-semibold text-gray-900 mb-2">Product Selection</h3>
         <p className="text-gray-600">Show products to customer and demonstrate with AR</p>
@@ -177,10 +178,14 @@ export function ProductSelection({ job, onComplete }: ProductSelectionProps) {
             <div className="flex space-x-2">
               <button
                 onClick={() => handleProductSelect(product)}
-                className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                className={`flex-1 px-3 py-2 rounded-lg transition-all text-sm font-medium ${
+                  selectedProducts.some(p => p.productId === product.id)
+                    ? 'bg-green-600 text-white shadow-lg transform scale-105'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
               >
                 <Package className="w-4 h-4 mr-1 inline" />
-                Select
+                {selectedProducts.some(p => p.productId === product.id) ? 'Selected' : 'Select'}
               </button>
               <button
                 onClick={() => handleARDemo(product)}
@@ -292,14 +297,22 @@ export function ProductSelection({ job, onComplete }: ProductSelectionProps) {
         </div>
       )}
 
-      {/* Continue Button */}
-      <div className="flex justify-end">
+      {/* Navigation Buttons */}
+      <div className="flex justify-between">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Back
+          </button>
+        )}
         <button
           onClick={handleComplete}
           disabled={selectedProducts.length === 0}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${!onBack ? 'ml-auto' : ''}`}
         >
-          Continue to Measurements
+          Continue to Next Step
           <ArrowRight className="w-4 h-4 ml-2 inline" />
         </button>
       </div>

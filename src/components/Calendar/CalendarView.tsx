@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, User, Plus, CreditCard as Edit, Eye } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
-  const { jobs } = useData();
+  const { jobs, users } = useData();
+  const { user: currentUser } = useAuth();
+  const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [newEventTitle, setNewEventTitle] = useState('');
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [showJobModal, setShowJobModal] = useState(false);
 
@@ -77,7 +81,10 @@ export function CalendarView() {
           <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
           <p className="text-gray-600 mt-2">Schedule and manage your appointments</p>
         </div>
-        <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+        <button
+          onClick={() => setShowCreateEvent(true)}
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
           <Plus className="w-5 h-5 mr-2" />
           New Event
         </button>
@@ -280,7 +287,7 @@ export function CalendarView() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Employee</label>
-                  <p className="text-gray-900">{selectedJob.employeeId}</p>
+                  <p className="text-gray-900">{users.find(u => u.id === selectedJob.employeeId)?.name || 'Unassigned'}</p>
                 </div>
 
                 <div>
@@ -288,6 +295,13 @@ export function CalendarView() {
                   <p className="text-gray-900">${selectedJob.quotation?.toLocaleString() || 'N/A'}</p>
                 </div>
               </div>
+
+              {selectedJob.notes && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{selectedJob.notes}</p>
+                </div>
+              )}
 
               {selectedJob.checklist && selectedJob.checklist.length > 0 && (
                 <div>
@@ -310,6 +324,118 @@ export function CalendarView() {
                 </div>
               )}
             </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Appointment Actions</h4>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => alert('Reschedule functionality would open here')}
+                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                >
+                  Reschedule
+                </button>
+                <button
+                  onClick={() => alert('Postpone functionality would open here')}
+                  className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm"
+                >
+                  Postpone
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to cancel this appointment?')) {
+                      alert('Appointment would be cancelled');
+                      setShowJobModal(false);
+                      setSelectedJob(null);
+                    }
+                  }}
+                  className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowJobModal(false);
+                  setSelectedJob(null);
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Event Modal */}
+      {showCreateEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">Create New Event</h3>
+              <button
+                onClick={() => {
+                  setShowCreateEvent(false);
+                  setNewEventTitle('');
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                alert(`Event "${newEventTitle}" would be created`);
+                setShowCreateEvent(false);
+                setNewEventTitle('');
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Event Title</label>
+                <input
+                  type="text"
+                  value={newEventTitle}
+                  onChange={(e) => setNewEventTitle(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter event title"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Date & Time</label>
+                <input
+                  type="datetime-local"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateEvent(false);
+                    setNewEventTitle('');
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Create Event
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

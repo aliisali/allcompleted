@@ -87,14 +87,10 @@ export function MainApp() {
         case 'dashboard': return <EmployeeDashboard />;
         case 'jobs': return <JobManagement />;
         case 'calendar': return <CalendarView />;
-        case 'tasks': return <TaskManagement />;
-        case 'camera': return <CameraCapture />;
-        case 'ar-camera': return <ARCameraModule />;
         case 'emails': return <EmailCenter />;
         case 'notifications': return <NotificationCenter />;
         case 'products': return <ProductVisualizer />;
-        case '3d-viewer': return <Model3DViewer />;
-        case 'working-hours': return <WorkingHoursManager />;
+        case 'account': return <WorkingHoursManager />;
         default: return <EmployeeDashboard />;
       }
     }

@@ -14,7 +14,8 @@ import { useData } from '../../contexts/DataContext';
 export function ProductVisualizer() {
   const { products } = useData();
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'2d' | '3d' | 'ar'>('2d');
+  const [viewMode, setViewMode] = useState<'viewer' | 'portfolio' | 'ar'>('viewer');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Filter active products only
   const activeProducts = products.filter(product => product.isActive);
@@ -71,26 +72,26 @@ export function ProductVisualizer() {
                 </h2>
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => setViewMode('2d')}
+                    onClick={() => setViewMode('viewer')}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      viewMode === '2d'
+                      viewMode === 'viewer'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     <Eye className="w-4 h-4 mr-1 inline" />
-                    2D View
+                    Product Viewer
                   </button>
                   <button
-                    onClick={() => setViewMode('3d')}
+                    onClick={() => setViewMode('portfolio')}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      viewMode === '3d'
+                      viewMode === 'portfolio'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     <Package className="w-4 h-4 mr-1 inline" />
-                    3D View
+                    Portfolio
                   </button>
                   <button
                     onClick={() => setViewMode('ar')}
@@ -108,54 +109,73 @@ export function ProductVisualizer() {
 
               {/* Viewer Area */}
               <div className="relative bg-gray-50 rounded-lg h-96 mb-6 overflow-hidden">
-                {viewMode === '2d' && (
-                  <img
-                    src={selectedProductData.image}
-                    alt={selectedProductData.name}
-                    className="w-full h-full object-cover"
-                  />
+                {viewMode === 'viewer' && (
+                  <div className="w-full h-full relative">
+                    <img
+                      src={selectedProductData.image}
+                      alt={selectedProductData.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Viewer Controls */}
+                    <div className="absolute top-4 right-4 flex space-x-2">
+                      <button
+                        onClick={() => window.open(selectedProductData.image, '_blank')}
+                        className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                        title="View Full Screen"
+                      >
+                        <Maximize className="w-4 h-4 text-gray-600" />
+                      </button>
+                      <button
+                        onClick={() => setCurrentImageIndex(0)}
+                        className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                        title="Reset View"
+                      >
+                        <RotateCcw className="w-4 h-4 text-gray-600" />
+                      </button>
+                      <button
+                        onClick={() => alert('Product Information:\\n\\n' + selectedProductData.description)}
+                        className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                        title="Product Info"
+                      >
+                        <Info className="w-4 h-4 text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
                 )}
-                
-                {viewMode === '3d' && (
+
+                {viewMode === 'portfolio' && (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
                     <div className="text-center">
                       <Package className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-                      <p className="text-gray-700 font-medium">3D Model Viewer</p>
+                      <p className="text-gray-700 font-medium">Portfolio Gallery</p>
                       <p className="text-sm text-gray-500 mt-2">
-                        Interactive 3D model would be displayed here
+                        Installation photos from previous projects would be displayed here
+                      </p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        Upload photos to build your portfolio
                       </p>
                     </div>
                   </div>
                 )}
-                
+
                 {viewMode === 'ar' && (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-100">
                     <div className="text-center">
                       <Smartphone className="w-16 h-16 text-purple-500 mx-auto mb-4" />
                       <p className="text-gray-700 font-medium">AR Experience</p>
                       <p className="text-sm text-gray-500 mt-2">
-                        Augmented Reality view would be activated here
+                        Augmented Reality view - see how blinds look in customer's space
                       </p>
-                      <button className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                      <button
+                        onClick={() => alert('AR Camera would launch here. This feature requires camera permissions.')}
+                        className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                      >
                         <Camera className="w-4 h-4 mr-2 inline" />
                         Launch AR Camera
                       </button>
                     </div>
                   </div>
                 )}
-
-                {/* Viewer Controls */}
-                <div className="absolute top-4 right-4 flex space-x-2">
-                  <button className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                    <Maximize className="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                    <RotateCcw className="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                    <Info className="w-4 h-4 text-gray-600" />
-                  </button>
-                </div>
               </div>
 
               {/* Product Information */}
@@ -186,13 +206,44 @@ export function ProductVisualizer() {
 
               {/* Action Buttons */}
               <div className="flex items-center space-x-4 mt-6 pt-6 border-t border-gray-200">
-                <button className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                <button
+                  onClick={() => {
+                    alert(`Added ${selectedProductData.name} to quote!`);
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
                   Add to Quote
                 </button>
-                <button className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: selectedProductData.name,
+                        text: selectedProductData.description,
+                        url: window.location.href
+                      }).catch(err => console.log('Error sharing:', err));
+                    } else {
+                      alert('Product link copied to clipboard!');
+                      navigator.clipboard.writeText(window.location.href);
+                    }
+                  }}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   Share with Customer
                 </button>
-                <button className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={() => {
+                    const favorites = JSON.parse(localStorage.getItem('favorite_products') || '[]');
+                    if (!favorites.includes(selectedProductData.id)) {
+                      favorites.push(selectedProductData.id);
+                      localStorage.setItem('favorite_products', JSON.stringify(favorites));
+                      alert('Added to favorites!');
+                    } else {
+                      alert('Already in favorites!');
+                    }
+                  }}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   Save to Favorites
                 </button>
               </div>

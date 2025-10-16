@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { 
   ClipboardList, 
@@ -13,6 +13,9 @@ import {
 
 export function EmployeeDashboard() {
   const { jobs, notifications, customers } = useData();
+  const [showJobDetails, setShowJobDetails] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
   
   // Filter jobs for current employee (simplified for demo)
   const todayJobs = jobs.slice(0, 3);
@@ -106,7 +109,14 @@ export function EmployeeDashboard() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-900">{job.time}</p>
-                    <button className="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors">
+                    <button
+                      onClick={() => {
+                        const fullJob = jobs.find(j => j.id === job.id);
+                        setSelectedJob(fullJob);
+                        setShowJobDetails(true);
+                      }}
+                      className="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                    >
                       View Details
                     </button>
                   </div>
@@ -120,7 +130,12 @@ export function EmployeeDashboard() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
-            <Bell className="w-5 h-5 text-gray-500" />
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <Bell className="w-5 h-5" />
+            </button>
           </div>
           <div className="space-y-4">
             {recentNotifications.map((notification, index) => (
@@ -136,23 +151,81 @@ export function EmployeeDashboard() {
               </div>
             ))}
           </div>
-          
-          {/* Quick Actions */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center p-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
-                <Camera className="w-4 h-4 mr-2" />
-                <span className="text-sm">AR Demo</span>
+        </div>
+      </div>
+
+      {/* Job Details Modal */}
+      {showJobDetails && selectedJob && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">Job Details</h3>
+              <button
+                onClick={() => {
+                  setShowJobDetails(false);
+                  setSelectedJob(null);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
               </button>
-              <button className="flex items-center justify-center p-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors">
-                <FileText className="w-4 h-4 mr-2" />
-                <span className="text-sm">Report</span>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Job ID</label>
+                <p className="text-gray-900 font-mono">{selectedJob.id}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Title</label>
+                <p className="text-gray-900">{selectedJob.title}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <p className="text-gray-900">{selectedJob.description}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    selectedJob.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    selectedJob.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                    selectedJob.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {selectedJob.status.replace('-', ' ')}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Scheduled Date</label>
+                  <p className="text-gray-900">{new Date(selectedJob.scheduledDate).toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Customer</label>
+                <p className="text-gray-900">{customers.find(c => c.id === selectedJob.customerId)?.name || 'Unknown'}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowJobDetails(false);
+                  setSelectedJob(null);
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

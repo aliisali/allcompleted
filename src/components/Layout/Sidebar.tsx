@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Building2, Calendar, ClipboardList, FileText, Settings, BarChart3, Camera, Mail, Bell, Package, LogOut, Headphones, Code, Shield, Cuboid as Cube, ChevronLeft, ChevronRight, Menu, Clock, Sparkles, CreditCard } from 'lucide-react';
+import { Users, Building2, Calendar, ClipboardList, FileText, Settings, BarChart3, Camera, Mail, Bell, Package, LogOut, Headphones, Code, Shield, Cuboid as Cube, ChevronLeft, ChevronRight, Menu, Clock, Sparkles, CreditCard, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useModulePermissions } from '../../hooks/useModulePermissions';
 import { Logo } from './Logo';
@@ -69,20 +69,17 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
           { id: 'subscription', label: 'Subscription', icon: CreditCard },
           ...(hasARCameraPermission() ? [{ id: 'ar-camera', label: 'AR Camera', icon: Headphones }] : []),
           { id: 'job-assignment', label: 'Job Assignment', icon: Users },
-          { id: 'products', label: 'Product Viewer', icon: Package },
+          { id: 'products', label: 'Product Visualizer', icon: Package },
         ];
       case 'employee':
         return [
           { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-          { id: 'jobs', label: 'Jobs', icon: ClipboardList },
+          { id: 'jobs', label: 'Jobs & Tasks', icon: ClipboardList },
           { id: 'calendar', label: 'Calendar', icon: Calendar },
-          { id: 'tasks', label: 'Tasks', icon: FileText },
-          { id: 'camera', label: 'Capture', icon: Camera },
-          ...(hasARCameraPermission() ? [{ id: 'ar-camera', label: 'AR Camera', icon: Headphones }] : []),
           { id: 'emails', label: 'Emails', icon: Mail },
           { id: 'notifications', label: 'Notifications', icon: Bell },
-          { id: 'products', label: 'Product Viewer', icon: Package },
-          { id: 'working-hours', label: 'Working Hours', icon: Clock },
+          { id: 'products', label: 'Product Visualizer', icon: Package },
+          { id: 'account', label: 'My Account', icon: User },
         ];
       default:
         return [];

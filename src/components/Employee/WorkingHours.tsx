@@ -1,17 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Save, User } from 'lucide-react';
+import { Clock, Save, User, Mail, Phone, MapPin, Edit2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { EmployeeWorkingHours } from '../../types';
 
 export function WorkingHoursManager() {
   const { user } = useAuth();
   const [workingHours, setWorkingHours] = useState<EmployeeWorkingHours | null>(null);
+  const [isEditingAccount, setIsEditingAccount] = useState(false);
+  const [accountDetails, setAccountDetails] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: '',
+    address: ''
+  });
 
   useEffect(() => {
     if (user) {
       loadWorkingHours();
+      loadAccountDetails();
     }
   }, [user]);
+
+  const loadAccountDetails = () => {
+    try {
+      const stored = localStorage.getItem(`account_details_${user?.id}`);
+      if (stored) {
+        setAccountDetails(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error loading account details:', error);
+    }
+  };
+
+  const saveAccountDetails = () => {
+    try {
+      localStorage.setItem(`account_details_${user?.id}`, JSON.stringify(accountDetails));
+      setIsEditingAccount(false);
+      showSuccessMessage('Account details saved successfully!');
+    } catch (error) {
+      console.error('Error saving account details:', error);
+    }
+  };
 
   const loadWorkingHours = () => {
     try {
@@ -89,21 +118,133 @@ export function WorkingHoursManager() {
 
   return (
     <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-6">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Working Hours</h1>
-          <p className="text-gray-600 mt-2">Set your availability for automatic job assignment</p>
-        </div>
-        <button
-          onClick={saveWorkingHours}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Save className="w-5 h-5 mr-2" />
-          Save Hours
-        </button>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">My Account</h1>
+        <p className="text-gray-600 mt-2">Manage your account details and working hours</p>
       </div>
 
+      {/* Account Details Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">Account Details</h2>
+          {!isEditingAccount ? (
+            <button
+              onClick={() => setIsEditingAccount(true)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit Details
+            </button>
+          ) : (
+            <div className="flex space-x-2">
+              <button
+                onClick={saveAccountDetails}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setIsEditingAccount(false);
+                  loadAccountDetails();
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <User className="w-4 h-4 inline mr-1" />
+              Full Name
+            </label>
+            {isEditingAccount ? (
+              <input
+                type="text"
+                value={accountDetails.name}
+                onChange={(e) => setAccountDetails({ ...accountDetails, name: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            ) : (
+              <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">{accountDetails.name}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Mail className="w-4 h-4 inline mr-1" />
+              Email Address
+            </label>
+            {isEditingAccount ? (
+              <input
+                type="email"
+                value={accountDetails.email}
+                onChange={(e) => setAccountDetails({ ...accountDetails, email: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            ) : (
+              <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">{accountDetails.email}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Phone className="w-4 h-4 inline mr-1" />
+              Phone Number
+            </label>
+            {isEditingAccount ? (
+              <input
+                type="tel"
+                value={accountDetails.phone}
+                onChange={(e) => setAccountDetails({ ...accountDetails, phone: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter phone number"
+              />
+            ) : (
+              <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">{accountDetails.phone || 'Not provided'}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <MapPin className="w-4 h-4 inline mr-1" />
+              Address
+            </label>
+            {isEditingAccount ? (
+              <input
+                type="text"
+                value={accountDetails.address}
+                onChange={(e) => setAccountDetails({ ...accountDetails, address: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter address"
+              />
+            ) : (
+              <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">{accountDetails.address || 'Not provided'}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Working Hours Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">
+            <Clock className="w-5 h-5 inline mr-2" />
+            Working Hours
+          </h2>
+          <button
+            onClick={saveWorkingHours}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Save className="w-5 h-5 mr-2" />
+            Save Hours
+          </button>
+        </div>
         <div className="space-y-4">
           {days.map(({ key, label }) => (
             <div key={key} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
