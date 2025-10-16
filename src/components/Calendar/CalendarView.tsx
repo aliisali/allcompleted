@@ -13,8 +13,14 @@ export function CalendarView() {
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [showJobModal, setShowJobModal] = useState(false);
 
-  // Convert jobs to calendar events
-  const calendarEvents = jobs.map(job => ({
+  // Filter jobs based on user role, then convert to calendar events
+  const visibleJobs = currentUser?.role === 'employee'
+    ? jobs.filter(job => job.employeeId === currentUser?.id)
+    : currentUser?.role === 'business'
+    ? jobs.filter(job => job.businessId === currentUser?.businessId)
+    : jobs; // Admin sees all
+
+  const calendarEvents = visibleJobs.map(job => ({
     id: job.id,
     title: job.title,
     customer: job.customerId,
