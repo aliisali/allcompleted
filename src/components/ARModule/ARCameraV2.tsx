@@ -12,6 +12,7 @@ export default function ARCameraV2() {
   const [flip, setFlip] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, posX: 50, posY: 50 });
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLImageElement>(null);
@@ -28,6 +29,13 @@ export default function ARCameraV2() {
 
   const startCamera = async () => {
     try {
+      setPermissionError(null);
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setPermissionError('Camera is not supported on this device or browser.');
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
       });
@@ -37,10 +45,20 @@ export default function ARCameraV2() {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setCameraActive(true);
+        setPermissionError(null);
       }
-    } catch (error) {
-      alert('Camera access denied. Please allow camera permissions.');
-      console.error(error);
+    } catch (error: any) {
+      console.error('Camera error:', error);
+
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        setPermissionError('Camera permission denied. Please allow camera access in your browser settings.');
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        setPermissionError('No camera found on this device.');
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        setPermissionError('Camera is already in use by another application.');
+      } else {
+        setPermissionError('Unable to access camera. Please check your browser permissions.');
+      }
     }
   };
 
@@ -180,9 +198,25 @@ export default function ARCameraV2() {
             >
               {!cameraActive ? (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
+                  <div className="text-center px-4 max-w-md">
                     <Camera className="w-20 h-20 text-blue-400 mx-auto mb-4" />
                     <p className="text-white text-xl font-bold mb-4">Camera Not Started</p>
+
+                    {permissionError && (
+                      <div className="mb-4 bg-red-500/20 border-2 border-red-500 rounded-lg p-4 text-left">
+                        <p className="text-red-300 font-semibold mb-2">Camera Access Required</p>
+                        <p className="text-red-200 text-sm mb-3">{permissionError}</p>
+                        <div className="text-left">
+                          <p className="text-white text-xs font-bold mb-2">To enable camera access:</p>
+                          <ul className="text-gray-300 text-xs space-y-1 list-disc list-inside">
+                            <li>Click the camera icon in your browser's address bar</li>
+                            <li>Select "Allow" for camera permissions</li>
+                            <li>Click the button below to try again</li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+
                     <button
                       onClick={startCamera}
                       className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-lg"

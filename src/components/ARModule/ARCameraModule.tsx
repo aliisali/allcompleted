@@ -11,6 +11,7 @@ export default function ARCameraModule() {
   const [posY, setPosY] = useState(50);
   const [showGrid, setShowGrid] = useState(false);
   const [savedScenes, setSavedScenes] = useState<any[]>([]);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -30,6 +31,13 @@ export default function ARCameraModule() {
 
   const startCamera = async () => {
     try {
+      setPermissionError(null);
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setPermissionError('Camera is not supported on this device or browser.');
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user' }
       });
@@ -40,11 +48,21 @@ export default function ARCameraModule() {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setShowCamera(true);
+        setPermissionError(null);
         requestAnimationFrame(renderFrame);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Camera error:', error);
-      alert('Camera permission denied or not available. Please allow camera access.');
+
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        setPermissionError('Camera permission denied. Please allow camera access in your browser settings.');
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        setPermissionError('No camera found on this device.');
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        setPermissionError('Camera is already in use by another application.');
+      } else {
+        setPermissionError('Unable to access camera. Please check your browser permissions.');
+      }
     }
   };
 
@@ -344,6 +362,22 @@ export default function ARCameraModule() {
 
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
             <h2 className="text-2xl font-bold text-white mb-4">Start AR</h2>
+
+            {permissionError && (
+              <div className="mb-4 bg-red-500/20 border-2 border-red-500 rounded-lg p-4">
+                <p className="text-red-300 font-semibold mb-2">Camera Access Required</p>
+                <p className="text-red-200 text-sm">{permissionError}</p>
+                <div className="mt-3 text-left">
+                  <p className="text-white text-xs font-bold mb-2">To enable camera access:</p>
+                  <ul className="text-gray-300 text-xs space-y-1 list-disc list-inside">
+                    <li>Click the camera icon in your browser's address bar</li>
+                    <li>Select "Allow" for camera permissions</li>
+                    <li>Reload the page and try again</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
             {!selectedFile ? (
               <div className="text-center py-12">
                 <p className="text-gray-300 mb-4">Select a file first, then start AR camera</p>
