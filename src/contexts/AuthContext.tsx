@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
 import ApiService from '../services/api';
 import { LocalStorageService } from '../lib/storage';
-import { DatabaseService } from '../lib/supabase';
+import { DatabaseService, supabase } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
