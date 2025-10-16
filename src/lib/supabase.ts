@@ -396,11 +396,15 @@ export class DatabaseService {
         .from('jobs')
         .insert([insertData])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('❌ DatabaseService: Supabase error:', error);
-        throw error;
+        throw new Error(`Failed to create job: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('No data returned from job creation');
       }
 
       console.log('✅ DatabaseService: Job created successfully:', data);

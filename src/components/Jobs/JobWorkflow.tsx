@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Play, Pause, CheckCircle, Camera, FileText, CreditCard, Ligature as Signature, Clock, ArrowRight, X } from 'lucide-react';
+import { Play, Pause, CheckCircle, Camera, FileText, CreditCard, Ligature as Signature, Clock, ArrowRight, X, Calendar } from 'lucide-react';
 import { Job } from '../../types';
 import { ProductSelection } from './ProductSelection';
 import { MeasurementScreen } from './MeasurementScreen';
 import { QuotationScreen } from './QuotationScreen';
 import { PaymentScreen } from './PaymentScreen';
 import { SignatureCapture } from './SignatureCapture';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface JobWorkflowProps {
   job: Job;
@@ -14,13 +15,15 @@ interface JobWorkflowProps {
 }
 
 export function JobWorkflow({ job, onUpdateJob, onClose }: JobWorkflowProps) {
-  const [currentStep, setCurrentStep] = useState<'start' | 'products' | 'measurements' | 'quotation' | 'payment' | 'signature' | 'complete'>('start');
+  const { user } = useAuth();
+  const [currentStep, setCurrentStep] = useState<'start' | 'products' | 'measurements' | 'quotation' | 'payment' | 'signature' | 'complete' | 'convert-to-installation'>('start');
   const [jobStartTime, setJobStartTime] = useState<string | null>(null);
+  const [showConversionSuccess, setShowConversionSuccess] = useState(false);
 
   const handleStartJob = () => {
     const startTime = new Date().toISOString();
     setJobStartTime(startTime);
-    
+
     const historyEntry = {
       id: `history-${Date.now()}`,
       timestamp: startTime,
@@ -37,6 +40,27 @@ export function JobWorkflow({ job, onUpdateJob, onClose }: JobWorkflowProps) {
     });
 
     setCurrentStep('products');
+  };
+
+  const handleConvertToInstallation = () => {
+    // Convert measurement job to installation job (same job, just change type)
+    onUpdateJob({
+      jobType: 'installation',
+      employeeId: null, // Unassign so business can reassign
+      status: 'pending', // Reset to pending for assignment
+      scheduledDate: '', // Needs new scheduling
+      jobHistory: [...job.jobHistory, {
+        id: `history-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        action: 'converted_to_installation',
+        description: 'Measurement completed - Job converted to installation',
+        userId: user?.id || '',
+        userName: user?.name || ''
+      }]
+    });
+
+    setShowConversionSuccess(true);
+    setCurrentStep('complete');
   };
 
   const handleStepComplete = (stepData: any) => {
@@ -73,7 +97,8 @@ export function JobWorkflow({ job, onUpdateJob, onClose }: JobWorkflowProps) {
         break;
       case 'payment':
         if (job.jobType === 'measurement') {
-          setCurrentStep('complete');
+          // Show conversion option for measurement jobs
+          setCurrentStep('convert-to-installation');
         } else {
           setCurrentStep('signature');
         }
@@ -182,6 +207,57 @@ export function JobWorkflow({ job, onUpdateJob, onClose }: JobWorkflowProps) {
           />
         );
 
+      case 'convert-to-installation':
+        return (
+          <div className="text-center py-12">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Calendar className="w-10 h-10 text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              Measurement Complete! Convert to Installation?
+            </h2>
+            <p className="text-gray-600 mb-2">
+              The measurement has been completed successfully.
+            </p>
+            <p className="text-gray-600 mb-6">
+              This job will be converted to an installation job.
+            </p>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
+              <h3 className="font-semibold text-gray-900 mb-2">What happens next:</h3>
+              <ul className="text-sm text-gray-700 space-y-1 text-left">
+                <li>• Same job converts to installation type</li>
+                <li>• Keeps all measurements & products</li>
+                <li>• Returns to your business (unassigned)</li>
+                <li>• Business user will reassign & schedule</li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-center space-x-4">
+              <button
+                onClick={() => {
+                  // Just complete measurement without converting
+                  onUpdateJob({
+                    status: 'completed',
+                    completedDate: new Date().toISOString()
+                  });
+                  setCurrentStep('complete');
+                }}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Complete as Measurement Only
+              </button>
+              <button
+                onClick={handleConvertToInstallation}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center"
+              >
+                <Calendar className="w-5 h-5 mr-2" />
+                Convert to Installation
+              </button>
+            </div>
+          </div>
+        );
+
       case 'complete':
         return (
           <div className="text-center py-12">
@@ -189,16 +265,23 @@ export function JobWorkflow({ job, onUpdateJob, onClose }: JobWorkflowProps) {
               <CheckCircle className="w-10 h-10 text-green-600" />
             </div>
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              {job.jobType === 'measurement' ? 'Measurement' : 'Installation'} Complete!
+              {showConversionSuccess ? 'Converted to Installation!' : `${job.jobType === 'measurement' ? 'Measurement' : 'Installation'} Complete!`}
             </h2>
-            <p className="text-gray-600 mb-6">
-              Job has been completed successfully.
+            <p className="text-gray-600 mb-2">
+              {showConversionSuccess
+                ? 'The job has been converted to installation type.'
+                : 'Job has been completed successfully.'}
             </p>
+            {showConversionSuccess && (
+              <p className="text-blue-600 font-semibold mb-4">
+                ✓ Job is now unassigned and waiting for business to reassign!
+              </p>
+            )}
             <button
               onClick={onClose}
               className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
             >
-              Close Job
+              Close
             </button>
           </div>
         );
