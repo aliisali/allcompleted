@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   ClipboardList, 
   Calendar, 
@@ -13,12 +14,14 @@ import {
 
 export function EmployeeDashboard() {
   const { jobs, notifications, customers } = useData();
+  const { user: currentUser } = useAuth();
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [showNotifications, setShowNotifications] = useState(false);
-  
-  // Filter jobs for current employee (simplified for demo)
-  const todayJobs = jobs.slice(0, 3);
+
+  // Filter jobs for current employee - only show jobs assigned to them
+  const employeeJobs = jobs.filter(job => job.employeeId === currentUser?.id);
+  const todayJobs = employeeJobs.slice(0, 3);
   const completedToday = todayJobs.filter(job => job.status === 'completed').length;
   const pendingToday = todayJobs.filter(job => job.status === 'pending').length;
   

@@ -42,10 +42,9 @@ export function JobManagement() {
     } else if (currentUser?.role === 'business') {
       return jobs.filter(job => job.businessId === currentUser.businessId); // Business can see jobs in their business
     } else if (currentUser?.role === 'employee') {
-      return jobs.filter(job => 
-        job.businessId === currentUser.businessId || 
+      return jobs.filter(job =>
         job.employeeId === currentUser.id
-      ); // Employee can see jobs in their business or assigned to them
+      ); // Employee can only see jobs assigned to them
     }
     return [];
   };
