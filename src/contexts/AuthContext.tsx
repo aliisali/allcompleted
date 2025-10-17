@@ -25,35 +25,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const initializeAuth = async () => {
     try {
-      // Check for stored user session
-      const storedUser = localStorage.getItem('current_user');
-      if (storedUser && storedUser !== 'undefined' && storedUser !== 'null') {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          console.log('✅ AuthContext: Found stored session for:', parsedUser.email);
-
-          // Verify user still exists in Supabase or localStorage
-          let userExists = false;
-
-          if (DatabaseService.isAvailable()) {
-            const users = await DatabaseService.getUsers();
-            userExists = users.some(u => u.id === parsedUser.id && u.isActive);
-          } else {
-            const users = LocalStorageService.getUsers();
-            userExists = users.some(u => u.id === parsedUser.id && u.isActive);
-          }
-
-          if (userExists) {
-            setUser(parsedUser);
-          } else {
-            console.log('⚠️ AuthContext: Stored user no longer exists, clearing session');
-            localStorage.removeItem('current_user');
-          }
-        } catch (error) {
-          console.error('❌ AuthContext: Failed to parse stored user:', error);
-          localStorage.removeItem('current_user');
-        }
-      }
+      // Session persistence disabled - users must login each time
+      console.log('✅ AuthContext: Initialized (session persistence disabled)');
     } catch (error) {
       console.error('Error initializing auth:', error);
     }
@@ -108,13 +81,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('✅ AuthContext: Login successful for:', foundUser.name, foundUser.role);
       setUser(foundUser);
 
-      // Save session
-      try {
-        localStorage.setItem('current_user', JSON.stringify(foundUser));
-        console.log('✅ AuthContext: Session saved');
-      } catch (error) {
-        console.error('❌ AuthContext: Failed to save session:', error);
-      }
+      // Session persistence disabled - no session saved
+      console.log('✅ AuthContext: Login complete (no session persistence)');
 
       setIsLoading(false);
       return true;
