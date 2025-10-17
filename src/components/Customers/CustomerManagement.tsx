@@ -203,24 +203,33 @@ export function CustomerManagement() {
                     setSelectedCustomer(customer);
                     setShowDetailsModal(true);
                   }}
-                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors group relative"
                   title="View customer details"
                 >
                   <Eye className="w-4 h-4" />
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    View Details
+                  </span>
                 </button>
                 <button
                   onClick={() => handleEditCustomer(customer)}
-                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors group relative"
                   title="Edit customer information"
                 >
                   <Edit className="w-4 h-4" />
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    Edit Customer
+                  </span>
                 </button>
                 <button
                   onClick={() => handleDeleteCustomer(customer.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors group relative"
                   title="Delete customer"
                 >
                   <Trash2 className="w-4 h-4" />
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    Delete Customer
+                  </span>
                 </button>
               </div>
             </div>

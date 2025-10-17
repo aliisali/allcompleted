@@ -52,6 +52,7 @@ export interface Job {
   startTime?: string;
   endTime?: string;
   quotation?: number;
+  quotationSent?: boolean;
   invoice?: number;
   deposit?: number;
   depositPaid?: boolean;

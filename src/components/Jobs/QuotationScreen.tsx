@@ -10,7 +10,7 @@ interface QuotationScreenProps {
 
 export function QuotationScreen({ job, onComplete, onCancel }: QuotationScreenProps) {
   const [quotationAmount, setQuotationAmount] = useState(job.quotation || 0);
-  const [quotationSent, setQuotationSent] = useState(false);
+  const [quotationSent, setQuotationSent] = useState(job.quotationSent || false);
   const [customerApproved, setCustomerApproved] = useState(false);
   const [additionalEmails, setAdditionalEmails] = useState<string[]>([]);
   const [newEmail, setNewEmail] = useState('');
@@ -93,6 +93,16 @@ export function QuotationScreen({ job, onComplete, onCancel }: QuotationScreenPr
       <div className="text-center">
         <h3 className="text-xl font-semibold text-gray-900 mb-2">Quotation</h3>
         <p className="text-gray-600">Prepare and send quotation to customer</p>
+        {job.quotationSent && (
+          <div className="mt-3 flex justify-center">
+            <button
+              onClick={() => onComplete({ quotation: job.quotation || quotationAmount, quotationSent: true })}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+            >
+              Skip (Already Sent) →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Quotation Breakdown */}
