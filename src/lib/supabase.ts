@@ -319,6 +319,8 @@ export class DatabaseService {
 
   static async getJobs(): Promise<Job[]> {
     try {
+      console.log('📥 DatabaseService.getJobs: Fetching jobs from Supabase...');
+
       const { data, error } = await supabase
         .from('jobs')
         .select('*')
@@ -326,31 +328,43 @@ export class DatabaseService {
 
       if (error) throw error;
 
-      return (data || []).map(job => ({
-        id: job.id,
-        title: job.title,
-        description: job.description || '',
-        jobType: 'measurement' as const,
-        status: job.status || 'pending',
-        customerId: job.customer_id,
-        employeeId: job.employee_id || null,
-        businessId: job.business_id,
-        scheduledDate: job.scheduled_date,
-        scheduledTime: new Date(job.scheduled_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-        completedDate: job.completed_date || undefined,
-        quotation: parseFloat(job.quotation) || 0,
-        invoice: parseFloat(job.invoice) || 0,
-        signature: job.signature || '',
-        images: job.images || [],
-        documents: job.documents || [],
-        checklist: job.checklist || [],
-        measurements: [],
-        selectedProducts: [],
-        jobHistory: [],
-        createdAt: job.created_at
-      }));
+      console.log(`✅ Retrieved ${data?.length || 0} jobs from database`);
+
+      const mappedJobs = (data || []).map(job => {
+        const mapped = {
+          id: job.id,
+          title: job.title,
+          description: job.description || '',
+          jobType: 'measurement' as const,
+          status: job.status || 'pending',
+          customerId: job.customer_id,
+          employeeId: job.employee_id || null,
+          businessId: job.business_id,
+          scheduledDate: job.scheduled_date,
+          scheduledTime: new Date(job.scheduled_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          completedDate: job.completed_date || undefined,
+          quotation: parseFloat(job.quotation) || 0,
+          invoice: parseFloat(job.invoice) || 0,
+          signature: job.signature || '',
+          images: job.images || [],
+          documents: job.documents || [],
+          checklist: job.checklist || [],
+          measurements: [],
+          selectedProducts: [],
+          jobHistory: [],
+          createdAt: job.created_at
+        };
+
+        if (job.employee_id) {
+          console.log(`📋 Job "${job.title}" (${job.id}) -> employee: ${job.employee_id}`);
+        }
+
+        return mapped;
+      });
+
+      return mappedJobs;
     } catch (error) {
-      console.error('Error fetching jobs:', error);
+      console.error('❌ Error fetching jobs:', error);
       return [];
     }
   }
@@ -439,11 +453,16 @@ export class DatabaseService {
 
   static async updateJob(id: string, jobData: any): Promise<void> {
     try {
+      console.log('🔄 DatabaseService.updateJob called with:', { id, jobData });
+
       const updateData: any = {};
       if (jobData.title) updateData.title = jobData.title;
       if (jobData.description !== undefined) updateData.description = jobData.description;
       if (jobData.status) updateData.status = jobData.status;
-      if (jobData.employeeId !== undefined) updateData.employee_id = jobData.employeeId || null;
+      if (jobData.employeeId !== undefined) {
+        updateData.employee_id = jobData.employeeId || null;
+        console.log('✅ Setting employee_id to:', updateData.employee_id);
+      }
       if (jobData.scheduledDate) updateData.scheduled_date = jobData.scheduledDate;
       if (jobData.completedDate !== undefined) updateData.completed_date = jobData.completedDate;
       if (jobData.quotation !== undefined) updateData.quotation = jobData.quotation;
@@ -453,14 +472,21 @@ export class DatabaseService {
       if (jobData.documents) updateData.documents = jobData.documents;
       if (jobData.checklist) updateData.checklist = jobData.checklist;
 
+      console.log('📤 Updating job in Supabase with:', updateData);
+
       const { error } = await supabase
         .from('jobs')
         .update(updateData)
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase update failed:', error);
+        throw error;
+      }
+
+      console.log('✅ Job update successful in database');
     } catch (error) {
-      console.error('Error updating job:', error);
+      console.error('❌ Error updating job:', error);
       throw error;
     }
   }
