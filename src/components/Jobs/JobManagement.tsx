@@ -37,14 +37,25 @@ export function JobManagement() {
 
   // Filter jobs based on user role and permissions
   const getVisibleJobs = () => {
+    console.log('🔍 Current user:', currentUser?.name, currentUser?.role, currentUser?.id);
+    console.log('📋 Total jobs:', jobs.length);
+
     if (currentUser?.role === 'admin') {
       return jobs; // Admin can see all jobs
     } else if (currentUser?.role === 'business') {
-      return jobs.filter(job => job.businessId === currentUser.businessId); // Business can see jobs in their business
+      const filtered = jobs.filter(job => job.businessId === currentUser.businessId);
+      console.log('📋 Business filtered jobs:', filtered.length);
+      return filtered; // Business can see jobs in their business
     } else if (currentUser?.role === 'employee') {
-      return jobs.filter(job =>
-        job.employeeId === currentUser.id
-      ); // Employee can only see jobs assigned to them
+      const filtered = jobs.filter(job => {
+        const match = job.employeeId === currentUser.id;
+        if (match) {
+          console.log('✅ Job matched for employee:', job.id, job.title);
+        }
+        return match;
+      });
+      console.log('📋 Employee filtered jobs:', filtered.length, 'for employeeId:', currentUser.id);
+      return filtered; // Employee can only see jobs assigned to them
     }
     return [];
   };
@@ -775,11 +786,14 @@ export function JobManagement() {
               </button>
             </div>
 
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
               const employeeId = formData.get('employeeId') as string;
-              updateJob(selectedJob.id, {
+
+              console.log('🔄 Assigning job to employee:', employeeId);
+
+              await updateJob(selectedJob.id, {
                 employeeId,
                 jobHistory: [...selectedJob.jobHistory, {
                   id: `history-${Date.now()}`,
@@ -790,8 +804,13 @@ export function JobManagement() {
                   userName: currentUser?.name || ''
                 }]
               });
+
               setShowAssignModal(false);
               setSelectedJob(null);
+
+              // Refresh data to show updated job assignment
+              console.log('🔄 Refreshing data after job assignment...');
+              await refreshData();
             }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select Employee</label>
