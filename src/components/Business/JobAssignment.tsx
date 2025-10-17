@@ -10,9 +10,9 @@ export function JobAssignmentCenter() {
   const [showAssignModal, setShowAssignModal] = useState(false);
 
   // Get unassigned jobs for this business
-  const unassignedJobs = jobs.filter(job => 
-    job.businessId === user?.businessId && 
-    (!job.employeeId || job.employeeId === '') &&
+  const unassignedJobs = jobs.filter(job =>
+    job.businessId === user?.businessId &&
+    (!job.employeeId || job.employeeId === '' || job.employeeId === null) &&
     job.status === 'pending'
   );
 
