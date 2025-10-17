@@ -7,7 +7,7 @@ import { JobWorkflow } from './JobWorkflow';
 import { JobDetailsModal } from './JobDetailsModal';
 
 export function JobManagement() {
-  const { jobs, addJob, deleteJob, updateJob, customers, users } = useData();
+  const { jobs, addJob, deleteJob, updateJob, customers, users, refreshData } = useData();
   const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -416,9 +416,12 @@ export function JobManagement() {
       <CreateJobModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onJobCreated={() => {
-          // Refresh jobs list
-          window.location.reload();
+        onJobCreated={async () => {
+          // Close modal and refresh jobs list from database
+          setShowCreateModal(false);
+          // Small delay to ensure database has written the data
+          await new Promise(resolve => setTimeout(resolve, 500));
+          await refreshData();
         }}
       />
 
