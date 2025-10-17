@@ -30,6 +30,7 @@ export interface Business {
   phone: string;
   email: string;
   adminId: string;
+  logo?: string;
   createdAt: string;
   features: string[];
   subscription: 'basic' | 'premium' | 'enterprise';

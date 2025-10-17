@@ -14,8 +14,10 @@ export function BusinessManagement() {
     phone: '',
     email: '',
     adminId: '',
-    adminPassword: ''
+    adminPassword: '',
+    logo: ''
   });
+  const [logoPreview, setLogoPreview] = useState<string>('');
 
 
   const filteredBusinesses = businesses.filter(business =>
@@ -32,6 +34,7 @@ export function BusinessManagement() {
       phone: newBusiness.phone,
       email: newBusiness.email,
       adminId: newBusiness.adminId || '',
+      logo: newBusiness.logo || '',
       features: ['job_management', 'calendar', 'reports'],
       subscription: 'basic' as const
     };
@@ -45,8 +48,10 @@ export function BusinessManagement() {
       phone: '',
       email: '',
       adminId: '',
-      adminPassword: ''
+      adminPassword: '',
+      logo: ''
     });
+    setLogoPreview('');
     
     setShowCreateModal(false);
   };
@@ -92,28 +97,45 @@ export function BusinessManagement() {
         {filteredBusinesses.map((business) => (
           <div key={business.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                {business.logo ? (
+                  <img src={business.logo} alt={`${business.name} logo`} className="w-full h-full object-contain" />
+                ) : (
+                  <Building2 className="w-6 h-6 text-blue-600" />
+                )}
               </div>
               <div className="flex space-x-2">
-                <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                <button
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors group relative"
+                  title="Edit Business"
+                >
                   <Edit className="w-4 h-4" />
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    Edit Business
+                  </span>
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setSelectedBusiness(business);
                     setShowFeaturesModal(true);
                   }}
-                  className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                  className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors group relative"
                   title="Manage Features"
                 >
                   <Settings className="w-4 h-4" />
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    Manage Features
+                  </span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleDeleteBusiness(business.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors group relative"
+                  title="Delete Business"
                 >
                   <Trash2 className="w-4 h-4" />
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    Delete Business
+                  </span>
                 </button>
               </div>
             </div>
@@ -276,6 +298,53 @@ export function BusinessManagement() {
                 <p className="text-sm text-gray-600 mt-1">
                   Password must be at least 8 characters. Admin can change this on first login.
                 </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Logo (Optional)
+                </label>
+                <div className="space-y-3">
+                  {logoPreview && (
+                    <div className="relative w-32 h-32 border-2 border-gray-300 rounded-lg overflow-hidden">
+                      <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLogoPreview('');
+                          setNewBusiness({...newBusiness, logo: ''});
+                        }}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 2 * 1024 * 1024) {
+                          alert('Logo size should be less than 2MB');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64String = reader.result as string;
+                          setNewBusiness({...newBusiness, logo: base64String});
+                          setLogoPreview(base64String);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-sm text-gray-600">
+                    Upload a logo for this business (max 2MB, PNG, JPG, or SVG)
+                  </p>
+                </div>
               </div>
 
               <div className="flex justify-end space-x-3 pt-6">
