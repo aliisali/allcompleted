@@ -37,14 +37,29 @@ export function JobManagement() {
 
   // Filter jobs based on user role and permissions
   const getVisibleJobs = () => {
-    console.log('🔍 Current user:', currentUser?.name, currentUser?.role, currentUser?.id);
-    console.log('📋 Total jobs:', jobs.length);
+    console.log('🔍 JobManagement - Current user:', {
+      name: currentUser?.name,
+      email: currentUser?.email,
+      role: currentUser?.role,
+      id: currentUser?.id,
+      businessId: currentUser?.businessId
+    });
+    console.log('📋 Total jobs in system:', jobs.length);
 
     if (currentUser?.role === 'admin') {
+      console.log('✅ Admin user - showing all jobs');
       return jobs; // Admin can see all jobs
     } else if (currentUser?.role === 'business') {
+      console.log('🏢 Business user - filtering by businessId:', currentUser.businessId);
+
+      // Log each job to see what's happening
+      jobs.forEach(job => {
+        const match = job.businessId === currentUser.businessId;
+        console.log(`  📋 Job "${job.title}" (${job.id}): businessId="${job.businessId}" => ${match ? '✅ MATCH' : '❌ NO MATCH'}`);
+      });
+
       const filtered = jobs.filter(job => job.businessId === currentUser.businessId);
-      console.log('📋 Business filtered jobs:', filtered.length);
+      console.log('✅ Business filtered jobs count:', filtered.length);
       return filtered; // Business can see jobs in their business
     } else if (currentUser?.role === 'employee') {
       const filtered = jobs.filter(job => {
