@@ -30,14 +30,28 @@ export function EmployeeDashboard() {
   }, [refreshData]);
 
   // Filter jobs for current employee - only show jobs assigned to them
-  console.log('🔍 EmployeeDashboard: Filtering jobs for employee:', currentUser?.id);
+  console.log('🔍 EmployeeDashboard: Current user details:', {
+    id: currentUser?.id,
+    email: currentUser?.email,
+    role: currentUser?.role,
+    businessId: currentUser?.businessId
+  });
   console.log('📋 Total jobs available:', jobs.length);
+
+  // Log all jobs to see what we're working with
+  jobs.forEach(job => {
+    console.log('📋 Job:', {
+      id: job.id,
+      title: job.title,
+      employeeId: job.employeeId,
+      status: job.status,
+      businessId: job.businessId
+    });
+  });
 
   const employeeJobs = jobs.filter(job => {
     const isMatch = job.employeeId === currentUser?.id;
-    if (isMatch) {
-      console.log('✅ Matched job:', job.id, job.title);
-    }
+    console.log(`🔍 Checking job ${job.id}: employeeId="${job.employeeId}" vs currentUser.id="${currentUser?.id}" => ${isMatch ? 'MATCH' : 'NO MATCH'}`);
     return isMatch;
   });
 

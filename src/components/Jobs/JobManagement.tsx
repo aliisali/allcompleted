@@ -791,9 +791,16 @@ export function JobManagement() {
               const formData = new FormData(e.currentTarget);
               const employeeId = formData.get('employeeId') as string;
 
-              console.log('🔄 Assigning job to employee:', employeeId);
+              console.log('🔄 Assigning job:', selectedJob.id, 'to employee:', employeeId);
+              console.log('📋 Selected job details:', {
+                id: selectedJob.id,
+                title: selectedJob.title,
+                currentEmployeeId: selectedJob.employeeId,
+                businessId: selectedJob.businessId
+              });
 
               try {
+                console.log('💾 Updating job with employeeId:', employeeId);
                 await updateJob(selectedJob.id, {
                   employeeId,
                   status: 'confirmed',
