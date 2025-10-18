@@ -47,8 +47,16 @@ export function CreateJobModal({ isOpen, onClose, onJobCreated }: CreateJobModal
     try {
       let customerId = selectedCustomerId;
 
-      // Get business ID - use default if user doesn't have one
-      const businessId = user?.businessId || '550e8400-e29b-41d4-a716-446655440001';
+      // Get business ID from current user
+      const businessId = user?.businessId;
+
+      if (!businessId) {
+        alert('Error: No business ID found. Please contact your administrator.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log('📋 Creating job with businessId:', businessId, 'for user:', user.name, 'role:', user.role);
 
       // Create new customer if needed
       if (isNewCustomer) {
