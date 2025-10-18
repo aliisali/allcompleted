@@ -32,21 +32,29 @@ export default function ARCameraModule() {
   const startCamera = async () => {
     try {
       setPermissionError(null);
+      console.log('📹 Starting AR camera...');
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setPermissionError('Camera is not supported on this device or browser.');
         return;
       }
 
+      console.log('📹 Requesting camera access...');
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user' }
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
       });
 
+      console.log('✅ Camera stream obtained');
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
+        console.log('✅ Video playing');
         setShowCamera(true);
         setPermissionError(null);
         requestAnimationFrame(renderFrame);
@@ -196,11 +204,17 @@ export default function ARCameraModule() {
   if (showCamera) {
     return (
       <div className="fixed inset-0 z-50 bg-black">
-        <video ref={videoRef} autoPlay playsInline muted className="hidden" />
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover"
+        />
 
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
 
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">

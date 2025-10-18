@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Camera - BlindsCloud</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+      background: #000;
+    }
+
+    #camera-container {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+
+    #video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 16px;
+      display: flex;
+      gap: 15px;
+      z-index: 10;
+    }
+
+    #top-bar {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .info-box {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      padding: 12px 20px;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 15px 30px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-capture {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-capture:hover {
+      background: #059669;
+    }
+
+    .btn-switch {
+      background: #6b7280;
+      color: white;
+    }
+
+    .btn-switch:hover {
+      background: #4b5563;
+    }
+
+    .btn-close {
+      background: #ef4444;
+      color: white;
+      padding: 12px;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-close:hover {
+      background: #dc2626;
+    }
+
+    #error {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      padding: 40px;
+      z-index: 5;
+    }
+
+    .error-content {
+      background: rgba(239, 68, 68, 0.2);
+      border: 2px solid #ef4444;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 500px;
+      text-align: center;
+      color: white;
+    }
+
+    .error-content h2 {
+      color: #ef4444;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .error-content p {
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .error-content button {
+      background: #10b981;
+      color: white;
+      width: 100%;
+    }
+
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      color: white;
+      font-size: 20px;
+      z-index: 5;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div>
+      <div class="spinner"></div>
+      <p>Starting camera...</p>
+    </div>
+  </div>
+
+  <div id="error">
+    <div class="error-content">
+      <h2>Camera Access Required</h2>
+      <p id="error-message"></p>
+      <p style="font-size: 14px; margin-top: 20px;">
+        <strong>To enable camera:</strong><br>
+        1. Click the camera icon in your browser address bar<br>
+        2. Select "Allow" for camera permissions<br>
+        3. Click the button below to try again
+      </p>
+      <button onclick="startCamera()">Try Again</button>
+    </div>
+  </div>
+
+  <div id="camera-container">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+
+    <div id="top-bar" style="display: none;">
+      <div class="info-box">
+        <span>🎥 AR Camera Active</span>
+      </div>
+      <button class="btn-close" onclick="closeWindow()">✕</button>
+    </div>
+
+    <div id="controls" style="display: none;">
+      <button class="btn-switch" onclick="switchCamera()">
+        <span>🔄</span> Switch Camera
+      </button>
+      <button class="btn-capture" onclick="capturePhoto()">
+        <span>📸</span> Capture Photo
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let stream = null;
+    let facingMode = 'environment';
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const loading = document.getElementById('loading');
+    const error = document.getElementById('error');
+    const errorMessage = document.getElementById('error-message');
+    const topBar = document.getElementById('top-bar');
+    const controls = document.getElementById('controls');
+
+    async function startCamera() {
+      try {
+        console.log('📹 Starting camera...');
+        loading.style.display = 'flex';
+        error.style.display = 'none';
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Camera is not supported on this device or browser.');
+        }
+
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+
+        console.log('📹 Requesting camera with facingMode:', facingMode);
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: facingMode,
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        });
+
+        console.log('✅ Camera stream obtained');
+        video.srcObject = stream;
+
+        video.onloadedmetadata = () => {
+          console.log('📹 Video metadata loaded:', video.videoWidth, 'x', video.videoHeight);
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        };
+
+        await video.play();
+        console.log('✅ Video playing');
+
+        loading.style.display = 'none';
+        topBar.style.display = 'flex';
+        controls.style.display = 'flex';
+
+        renderFrame();
+
+      } catch (err) {
+        console.error('❌ Camera error:', err);
+        loading.style.display = 'none';
+        error.style.display = 'flex';
+
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          errorMessage.textContent = 'Camera permission denied. Please allow camera access in your browser settings.';
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          errorMessage.textContent = 'No camera found on this device.';
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          errorMessage.textContent = 'Camera is already in use by another application.';
+        } else {
+          errorMessage.textContent = err.message || 'Unable to access camera. Please check your browser permissions.';
+        }
+      }
+    }
+
+    function renderFrame() {
+      if (!video.videoWidth) {
+        requestAnimationFrame(renderFrame);
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      requestAnimationFrame(renderFrame);
+    }
+
+    function switchCamera() {
+      facingMode = facingMode === 'environment' ? 'user' : 'environment';
+      console.log('🔄 Switching to:', facingMode);
+      startCamera();
+    }
+
+    function capturePhoto() {
+      const link = document.createElement('a');
+      link.download = `ar-photo-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      console.log('📸 Photo captured');
+
+      const flash = document.createElement('div');
+      flash.style.cssText = 'position:fixed;inset:0;background:white;z-index:9999;animation:flash 0.3s';
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 300);
+    }
+
+    function closeWindow() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      window.close();
+    }
+
+    // Start camera on load
+    startCamera();
+
+    // Stop camera when page unloads
+    window.addEventListener('beforeunload', () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    });
+  </script>
+</body>
+</html>

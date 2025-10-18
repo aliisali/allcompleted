@@ -130,7 +130,13 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => onTabChange(item.id)}
+                  onClick={() => {
+                    if (item.id === 'ar-camera' || item.id === 'ar-camera-v2') {
+                      window.open('/ar-camera.html', '_blank', 'width=1280,height=720');
+                    } else {
+                      onTabChange(item.id);
+                    }
+                  }}
                   className={`w-full flex items-center ${isMinimized ? 'px-2 py-3 justify-center' : 'px-4 py-3'} text-left rounded-lg transition-all duration-200 group relative ${
                     activeTab === item.id
                       ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg transform scale-105'
@@ -140,7 +146,10 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
                 >
                   <Icon className={`w-5 h-5 ${isMinimized ? '' : 'mr-3'} transition-all duration-200`} />
                   {!isMinimized && (
-                    <span className="transition-all duration-200">{item.label}</span>
+                    <span className="transition-all duration-200">
+                      {item.label}
+                      {(item.id === 'ar-camera' || item.id === 'ar-camera-v2') && ' 🚀'}
+                    </span>
                   )}
                   
                   {/* Tooltip for minimized state */}
