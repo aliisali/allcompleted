@@ -137,19 +137,8 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
                     console.log('🖱️ Sidebar: Clicked on', item.id);
 
                     if (item.id === 'ar-camera' || item.id === 'ar-camera-v2') {
-                      console.log('📹 Opening AR Camera in new window...');
-                      try {
-                        const newWindow = window.open('/ar-camera.html', '_blank', 'width=1280,height=720');
-                        if (newWindow) {
-                          console.log('✅ AR Camera window opened successfully');
-                        } else {
-                          console.error('❌ Failed to open AR Camera window - popup may be blocked');
-                          alert('Please allow popups for this site to use AR Camera');
-                        }
-                      } catch (error) {
-                        console.error('❌ Error opening AR Camera window:', error);
-                      }
-                      return false;
+                      console.log('📹 Switching to AR Camera tab...');
+                      onTabChange(item.id);
                     } else {
                       onTabChange(item.id);
                     }
