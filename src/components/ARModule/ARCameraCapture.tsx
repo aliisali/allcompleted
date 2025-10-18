@@ -35,12 +35,15 @@ export function ARCameraCapture({ onCapture, onClose, title = 'AR Camera', overl
   const requestCameraPermission = async () => {
     try {
       setPermissionError(null);
+      console.log('📹 Requesting camera permission...');
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('❌ Camera API not supported');
         setPermissionError('Camera is not supported on this device or browser.');
         return;
       }
 
+      console.log('📹 Requesting camera with facingMode:', facingMode);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: facingMode,
@@ -49,13 +52,35 @@ export function ARCameraCapture({ onCapture, onClose, title = 'AR Camera', overl
         }
       });
 
+      console.log('✅ Camera stream obtained:', stream.getVideoTracks().length, 'video tracks');
       streamRef.current = stream;
 
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setCameraActive(true);
-        setPermissionError(null);
+        const video = videoRef.current;
+        video.srcObject = stream;
+        console.log('📹 Video element found, setting stream...');
+
+        // Add event listener to check when video metadata loads
+        video.onloadedmetadata = () => {
+          console.log('📹 Video metadata loaded');
+          console.log('📹 Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+        };
+
+        video.onloadeddata = () => {
+          console.log('📹 Video data loaded - camera feed ready');
+        };
+
+        try {
+          await video.play();
+          console.log('✅ Camera started successfully, video is playing');
+          setCameraActive(true);
+          setPermissionError(null);
+        } catch (playError) {
+          console.error('❌ Error playing video:', playError);
+          setPermissionError('Failed to start video playback');
+        }
+      } else {
+        console.error('❌ Video element not found');
       }
     } catch (error: any) {
       console.error('Camera error:', error);
@@ -183,7 +208,12 @@ export function ARCameraCapture({ onCapture, onClose, title = 'AR Camera', overl
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                backgroundColor: '#000'
+              }}
             />
             {overlayImage && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
