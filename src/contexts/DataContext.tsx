@@ -395,16 +395,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Job management
   const addJob = async (jobData: Omit<Job, 'id' | 'createdAt'>) => {
     try {
+      console.log('📋 DataContext: Creating job with data:', {
+        title: jobData.title,
+        businessId: jobData.businessId,
+        employeeId: jobData.employeeId,
+        customerId: jobData.customerId,
+        jobType: jobData.jobType
+      });
+
       let newJob: Job;
 
       if (DatabaseService.isAvailable()) {
         console.log('✅ Using Supabase to create job');
         newJob = await DatabaseService.createJob(jobData);
+        console.log('✅ Job created in Supabase with ID:', newJob.id, 'businessId:', newJob.businessId);
       } else {
         console.log('📝 Using localStorage to create job');
         await saveToMultipleSources('create', 'job', jobData);
         const jobs = LocalStorageService.getJobs();
         newJob = jobs[jobs.length - 1];
+        console.log('✅ Job created in localStorage with ID:', newJob.id, 'businessId:', newJob.businessId);
       }
 
       setJobs(prev => [...prev, newJob]);
