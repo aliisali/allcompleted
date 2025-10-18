@@ -25,8 +25,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const initializeAuth = async () => {
     try {
-      // Session persistence disabled - users must login each time
-      console.log('✅ AuthContext: Initialized (session persistence disabled)');
+      console.log('🔍 AuthContext: Checking for existing session...');
+
+      // Try to restore session from localStorage
+      const savedUser = localStorage.getItem('current_user');
+      if (savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          console.log('✅ AuthContext: Found saved session for:', parsedUser.name);
+          setUser(parsedUser);
+        } catch (e) {
+          console.error('❌ AuthContext: Failed to parse saved user:', e);
+          localStorage.removeItem('current_user');
+        }
+      } else {
+        console.log('ℹ️ AuthContext: No saved session found');
+      }
     } catch (error) {
       console.error('Error initializing auth:', error);
     }
@@ -81,8 +95,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('✅ AuthContext: Login successful for:', foundUser.name, foundUser.role);
       setUser(foundUser);
 
-      // Session persistence disabled - no session saved
-      console.log('✅ AuthContext: Login complete (no session persistence)');
+      // Save user session to localStorage
+      try {
+        localStorage.setItem('current_user', JSON.stringify(foundUser));
+        console.log('✅ AuthContext: Session saved to localStorage');
+      } catch (e) {
+        console.error('❌ AuthContext: Failed to save session:', e);
+      }
 
       setIsLoading(false);
       return true;
