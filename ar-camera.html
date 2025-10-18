@@ -146,6 +146,73 @@
       display: none;
     }
 
+    #product-selector {
+      position: absolute;
+      top: 80px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 15px;
+      max-height: 70vh;
+      overflow-y: auto;
+      z-index: 10;
+      display: none;
+      max-width: 300px;
+    }
+
+    #product-selector.show {
+      display: block;
+    }
+
+    .product-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .product-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(5px);
+    }
+
+    .product-item img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .product-item-info {
+      flex: 1;
+    }
+
+    .product-item-name {
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .product-item-category {
+      color: #9ca3af;
+      font-size: 12px;
+    }
+
+    .btn-products {
+      background: #8b5cf6;
+      color: white;
+    }
+
+    .btn-products:hover {
+      background: #7c3aed;
+    }
+
     #error {
       position: absolute;
       inset: 0;
@@ -245,15 +312,23 @@
       <button class="btn-close" onclick="closeWindow()">✕</button>
     </div>
 
+    <div id="product-selector">
+      <h3 style="color: white; margin-bottom: 15px; font-size: 16px;">Select Product</h3>
+      <div id="products-list"></div>
+    </div>
+
     <div id="controls" style="display: none;">
+      <button class="btn-products" onclick="toggleProductSelector()">
+        <span>🏷️</span> Products
+      </button>
       <button class="btn-upload" onclick="document.getElementById('product-upload').click()">
-        <span>📦</span> Upload Product
+        <span>📤</span> Upload
       </button>
       <button class="btn-switch" onclick="switchCamera()">
-        <span>🔄</span> Switch Camera
+        <span>🔄</span> Switch
       </button>
       <button class="btn-capture" onclick="capturePhoto()">
-        <span>📸</span> Capture Photo
+        <span>📸</span> Capture
       </button>
     </div>
   </div>
@@ -261,6 +336,10 @@
   <input type="file" id="product-upload" accept="image/*" onchange="uploadProduct(event)" />
 
   <script>
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://ttnavyechfmlfrlayhxs.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0bmF2eWVjaGZtbGZybGF5aHhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NzIwNjMsImV4cCI6MjA3NjM0ODA2M30.KtZqtAGh5somDSPIjvhIdK4d3QA-uKbYzkqT-41vGqA';
+
     let stream = null;
     let facingMode = 'environment';
     const video = document.getElementById('video');
@@ -271,6 +350,81 @@
     const errorMessage = document.getElementById('error-message');
     const topBar = document.getElementById('top-bar');
     const controls = document.getElementById('controls');
+
+    // Load products from Supabase
+    async function loadProducts() {
+      try {
+        console.log('📦 Loading products from Supabase...');
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?is_active=eq.true&select=id,name,category,image`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load products');
+        }
+
+        const products = await response.json();
+        console.log('✅ Loaded products:', products.length);
+        renderProducts(products);
+      } catch (err) {
+        console.error('❌ Error loading products:', err);
+      }
+    }
+
+    function renderProducts(products) {
+      const productsList = document.getElementById('products-list');
+      productsList.innerHTML = '';
+
+      if (products.length === 0) {
+        productsList.innerHTML = '<p style="color: #9ca3af; text-align: center;">No products available</p>';
+        return;
+      }
+
+      products.forEach(product => {
+        const item = document.createElement('div');
+        item.className = 'product-item';
+        item.onclick = () => selectProduct(product);
+
+        const imageUrl = product.image && product.image.startsWith('data:')
+          ? product.image
+          : (product.image || 'https://via.placeholder.com/50');
+
+        item.innerHTML = `
+          <img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/50'">
+          <div class="product-item-info">
+            <div class="product-item-name">${product.name}</div>
+            <div class="product-item-category">${product.category}</div>
+          </div>
+        `;
+
+        productsList.appendChild(item);
+      });
+    }
+
+    function toggleProductSelector() {
+      const selector = document.getElementById('product-selector');
+      selector.classList.toggle('show');
+    }
+
+    function selectProduct(product) {
+      console.log('✅ Selected product:', product.name);
+      const imageUrl = product.image;
+
+      if (!imageUrl) {
+        alert('This product has no image available');
+        return;
+      }
+
+      const overlay = document.getElementById('product-overlay');
+      overlay.src = imageUrl;
+      overlay.style.display = 'block';
+      positionProduct();
+
+      toggleProductSelector();
+    }
 
     async function startCamera() {
       try {
@@ -312,6 +466,7 @@
         controls.style.display = 'flex';
 
         renderFrame();
+        loadProducts();
 
       } catch (err) {
         console.error('❌ Camera error:', err);
