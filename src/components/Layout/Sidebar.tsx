@@ -137,8 +137,22 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
                     console.log('🖱️ Sidebar: Clicked on', item.id);
 
                     if (item.id === 'ar-camera' || item.id === 'ar-camera-v2') {
-                      console.log('📹 Switching to AR Camera tab...');
-                      onTabChange(item.id);
+                      console.log('📹 Opening AR Camera in popup...');
+                      try {
+                        const width = 1400;
+                        const height = 900;
+                        const left = (window.screen.width - width) / 2;
+                        const top = (window.screen.height - height) / 2;
+                        const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`;
+
+                        const newWindow = window.open('/ar-camera.html', 'ARCamera', features);
+                        if (!newWindow) {
+                          alert('Please allow popups for this site to use AR Camera.\n\nClick the popup blocker icon in your browser address bar and allow popups.');
+                        }
+                      } catch (error) {
+                        console.error('❌ Error opening AR Camera:', error);
+                        alert('Failed to open AR Camera. Please check your browser settings.');
+                      }
                     } else {
                       onTabChange(item.id);
                     }

@@ -127,6 +127,25 @@
       background: #dc2626;
     }
 
+    .btn-upload {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-upload:hover {
+      background: #2563eb;
+    }
+
+    #product-overlay {
+      position: absolute;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
     #error {
       position: absolute;
       inset: 0;
@@ -217,6 +236,7 @@
   <div id="camera-container">
     <video id="video" autoplay playsinline muted></video>
     <canvas id="canvas"></canvas>
+    <img id="product-overlay" style="display: none;" />
 
     <div id="top-bar" style="display: none;">
       <div class="info-box">
@@ -226,6 +246,9 @@
     </div>
 
     <div id="controls" style="display: none;">
+      <button class="btn-upload" onclick="document.getElementById('product-upload').click()">
+        <span>📦</span> Upload Product
+      </button>
       <button class="btn-switch" onclick="switchCamera()">
         <span>🔄</span> Switch Camera
       </button>
@@ -234,6 +257,8 @@
       </button>
     </div>
   </div>
+
+  <input type="file" id="product-upload" accept="image/*" onchange="uploadProduct(event)" />
 
   <script>
     let stream = null;
@@ -343,6 +368,106 @@
       }
       window.close();
     }
+
+    // Product overlay variables
+    let productImage = null;
+    let productScale = 0.3;
+    let productX = 50; // percentage
+    let productY = 50; // percentage
+    let isDragging = false;
+
+    function uploadProduct(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        productImage = new Image();
+        productImage.onload = function() {
+          console.log('✅ Product image loaded');
+          const overlay = document.getElementById('product-overlay');
+          overlay.src = e.target.result;
+          overlay.style.display = 'block';
+          positionProduct();
+        };
+        productImage.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function positionProduct() {
+      const overlay = document.getElementById('product-overlay');
+      if (!overlay.src) return;
+
+      const containerWidth = window.innerWidth;
+      const containerHeight = window.innerHeight;
+
+      overlay.style.width = `${containerWidth * productScale}px`;
+      overlay.style.height = 'auto';
+      overlay.style.left = `${(productX / 100) * containerWidth}px`;
+      overlay.style.top = `${(productY / 100) * containerHeight}px`;
+      overlay.style.transform = 'translate(-50%, -50%)';
+    }
+
+    // Enable dragging of product
+    const cameraContainer = document.getElementById('camera-container');
+    cameraContainer.addEventListener('mousedown', (e) => {
+      const overlay = document.getElementById('product-overlay');
+      if (overlay.style.display === 'none') return;
+
+      isDragging = true;
+      updateProductPosition(e);
+    });
+
+    cameraContainer.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        updateProductPosition(e);
+      }
+    });
+
+    cameraContainer.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Touch support for mobile
+    cameraContainer.addEventListener('touchstart', (e) => {
+      const overlay = document.getElementById('product-overlay');
+      if (overlay.style.display === 'none') return;
+
+      isDragging = true;
+      updateProductPosition(e.touches[0]);
+    });
+
+    cameraContainer.addEventListener('touchmove', (e) => {
+      if (isDragging) {
+        e.preventDefault();
+        updateProductPosition(e.touches[0]);
+      }
+    });
+
+    cameraContainer.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    function updateProductPosition(event) {
+      productX = (event.clientX / window.innerWidth) * 100;
+      productY = (event.clientY / window.innerHeight) * 100;
+      positionProduct();
+    }
+
+    // Zoom with mouse wheel
+    cameraContainer.addEventListener('wheel', (e) => {
+      const overlay = document.getElementById('product-overlay');
+      if (overlay.style.display === 'none') return;
+
+      e.preventDefault();
+      productScale += e.deltaY > 0 ? -0.02 : 0.02;
+      productScale = Math.max(0.1, Math.min(1, productScale));
+      positionProduct();
+    });
+
+    // Resize handler
+    window.addEventListener('resize', positionProduct);
 
     // Start camera on load
     startCamera();
