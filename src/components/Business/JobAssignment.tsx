@@ -27,7 +27,9 @@ export function JobAssignmentCenter() {
   const handleAssignJob = async (jobId: string, employeeId: string) => {
     try {
       const employee = businessEmployees.find(e => e.id === employeeId);
-      
+
+      console.log('🔄 Assigning job:', jobId, 'to employee:', employeeId);
+
       await updateJob(jobId, {
         employeeId,
         status: 'confirmed',
@@ -44,18 +46,17 @@ export function JobAssignmentCenter() {
         ]
       });
 
-      // Send notification to employee
-      // This would be implemented with the notification system
+      console.log('✅ Job assigned successfully');
 
       setShowAssignModal(false);
       setSelectedJob(null);
-      
+
       // Show success message
       const successDiv = document.createElement('div');
       successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
       successDiv.textContent = `Job assigned to ${employee?.name} successfully!`;
       document.body.appendChild(successDiv);
-      
+
       setTimeout(() => {
         if (document.body.contains(successDiv)) {
           document.body.removeChild(successDiv);
@@ -63,7 +64,7 @@ export function JobAssignmentCenter() {
       }, 3000);
 
     } catch (error) {
-      console.error('Error assigning job:', error);
+      console.error('❌ Error assigning job:', error);
       alert('Failed to assign job. Please try again.');
     }
   };

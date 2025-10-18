@@ -793,24 +793,33 @@ export function JobManagement() {
 
               console.log('🔄 Assigning job to employee:', employeeId);
 
-              await updateJob(selectedJob.id, {
-                employeeId,
-                jobHistory: [...selectedJob.jobHistory, {
-                  id: `history-${Date.now()}`,
-                  timestamp: new Date().toISOString(),
-                  action: 'job_assigned',
-                  description: `Job assigned to employee ${employeeId}`,
-                  userId: currentUser?.id || '',
-                  userName: currentUser?.name || ''
-                }]
-              });
+              try {
+                await updateJob(selectedJob.id, {
+                  employeeId,
+                  status: 'confirmed',
+                  jobHistory: [...selectedJob.jobHistory, {
+                    id: `history-${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    action: 'job_assigned',
+                    description: `Job assigned to employee ${employeeId}`,
+                    userId: currentUser?.id || '',
+                    userName: currentUser?.name || ''
+                  }]
+                });
 
-              setShowAssignModal(false);
-              setSelectedJob(null);
+                console.log('✅ Job assigned successfully');
 
-              // Refresh data to show updated job assignment
-              console.log('🔄 Refreshing data after job assignment...');
-              await refreshData();
+                setShowAssignModal(false);
+                setSelectedJob(null);
+
+                // Refresh data to show updated job assignment
+                console.log('🔄 Refreshing data after job assignment...');
+                await refreshData();
+
+              } catch (error) {
+                console.error('❌ Error assigning job:', error);
+                alert('Failed to assign job. Please try again.');
+              }
             }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select Employee</label>
