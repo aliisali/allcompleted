@@ -18,6 +18,7 @@ export function EmployeeDashboard() {
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [expandedNotifications, setExpandedNotifications] = useState(false);
 
   // Auto-refresh jobs every 30 seconds to check for new assignments
   React.useEffect(() => {
@@ -78,8 +79,9 @@ export function EmployeeDashboard() {
     type: job.title
   }));
 
-  // Get recent notifications
-  const recentNotifications = notifications.slice(0, 3).map(notification => ({
+  // Get notifications
+  const displayNotifications = expandedNotifications ? notifications : notifications.slice(0, 3);
+  const notificationsList = displayNotifications.map(notification => ({
     message: notification.message,
     time: new Date(notification.createdAt).toLocaleString(),
     type: notification.type
@@ -196,7 +198,12 @@ export function EmployeeDashboard() {
         {/* Notifications */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Notifications
+              <span className="ml-2 text-sm font-normal text-gray-500">
+                ({notifications.length})
+              </span>
+            </h2>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="text-blue-600 hover:text-blue-700 transition-colors"
@@ -204,20 +211,32 @@ export function EmployeeDashboard() {
               <Bell className="w-5 h-5" />
             </button>
           </div>
-          <div className="space-y-4">
-            {recentNotifications.map((notification, index) => (
-              <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className={`w-2 h-2 rounded-full mt-2 ${
-                  notification.type === 'job' ? 'bg-blue-500' :
-                  notification.type === 'reminder' ? 'bg-yellow-500' : 'bg-green-500'
-                }`} />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{notification.message}</p>
-                  <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+          <div className={`space-y-4 ${expandedNotifications ? 'max-h-[500px] overflow-y-auto' : ''}`}>
+            {notificationsList.length > 0 ? (
+              notificationsList.map((notification, index) => (
+                <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                    notification.type === 'job' ? 'bg-blue-500' :
+                    notification.type === 'reminder' ? 'bg-yellow-500' : 'bg-green-500'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{notification.message}</p>
+                    <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">No notifications</p>
+            )}
           </div>
+          {notifications.length > 3 && (
+            <button
+              onClick={() => setExpandedNotifications(!expandedNotifications)}
+              className="w-full mt-4 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+            >
+              {expandedNotifications ? 'Show Less' : `Show All (${notifications.length})`}
+            </button>
+          )}
         </div>
       </div>
 
