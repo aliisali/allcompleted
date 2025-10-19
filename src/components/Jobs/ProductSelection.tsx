@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, Camera, Check, ArrowRight, X, Info } from 'lucide-react';
+import { Package, Camera, Check, ArrowRight, X, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { Job, SelectedProduct } from '../../types';
 import { ARCameraCapture } from '../ARModule/ARCameraCapture';
@@ -19,6 +19,7 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showProductDetail, setShowProductDetail] = useState(false);
   const [detailProduct, setDetailProduct] = useState<any>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   console.log('📦 ProductSelection: Products available:', products.length);
   console.log('📦 ProductSelection: Loading state:', loading);
@@ -278,30 +279,80 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
       )}
 
       {/* Product Detail Modal */}
-      {showProductDetail && detailProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-gray-900">Product Details</h3>
-              <button
-                onClick={() => {
-                  setShowProductDetail(false);
-                  setDetailProduct(null);
-                }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+      {showProductDetail && detailProduct && (() => {
+        const productImages = [detailProduct.image, detailProduct.model3d, detailProduct.arModel].filter(Boolean);
+        const hasMultipleImages = productImages.length > 1;
 
-            <div className="p-6">
-              <div className="mb-6">
-                <img
-                  src={detailProduct.image}
-                  alt={detailProduct.name}
-                  className="w-full h-64 object-cover rounded-lg shadow-md"
-                />
+        const nextImage = () => {
+          setCurrentImageIndex((prev) => (prev + 1) % productImages.length);
+        };
+
+        const prevImage = () => {
+          setCurrentImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length);
+        };
+
+        return (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+                <h3 className="text-xl font-semibold text-gray-900">Product Details</h3>
+                <button
+                  onClick={() => {
+                    setShowProductDetail(false);
+                    setDetailProduct(null);
+                    setCurrentImageIndex(0);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
               </div>
+
+              <div className="p-6">
+                <div className="mb-6 relative group">
+                  <img
+                    src={productImages[currentImageIndex]}
+                    alt={`${detailProduct.name} - ${currentImageIndex + 1}`}
+                    className="w-full h-64 object-cover rounded-lg shadow-md"
+                  />
+
+                  {hasMultipleImages && (
+                    <>
+                      <button
+                        onClick={prevImage}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <ChevronLeft className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={nextImage}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+                        {productImages.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentImageIndex(index)}
+                            className={`w-2 h-2 rounded-full transition-all ${
+                              index === currentImageIndex
+                                ? 'bg-white w-6'
+                                : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {hasMultipleImages && (
+                    <div className="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                      {currentImageIndex + 1} / {productImages.length}
+                    </div>
+                  )}
+                </div>
 
               <div className="space-y-4">
                 <div>
@@ -386,7 +437,8 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* AR Camera Modal */}
       {showARCamera && currentProduct && (
