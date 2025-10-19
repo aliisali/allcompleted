@@ -71,29 +71,56 @@ export function UserManagement() {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // Validate required fields
+    if (!newUser.name.trim()) {
+      alert('Please enter a name');
+      return;
+    }
+
+    if (!newUser.email.trim()) {
+      alert('Please enter an email');
+      return;
+    }
+
+    if (!newUser.password) {
+      alert('Please enter a password');
+      return;
+    }
+
     // Validate passwords match
     if (newUser.password !== newUser.confirmPassword) {
       alert('Passwords do not match!');
       return;
     }
-    
+
+    // Validate password strength
+    if (newUser.password.length < 6) {
+      alert('Password must be at least 6 characters long');
+      return;
+    }
+
     try {
       const userData = {
         name: newUser.name.trim(),
         email: newUser.email.trim().toLowerCase(),
         password: newUser.password,
         role: newUser.role,
-        permissions: newUser.role === 'employee' && currentUser?.businessId 
+        permissions: newUser.role === 'employee' && currentUser?.businessId
           ? ['create_jobs', 'manage_tasks', 'capture_signatures', 'view_dashboard', 'view_calendar']
           : getDefaultPermissions(newUser.role),
         businessId: newUser.role === 'employee' ? (currentUser?.businessId || undefined) : (newUser.businessId || undefined),
         isActive: true,
         emailVerified: false
       };
-      
+
+      console.log('📝 Creating user with data:', { ...userData, password: '***' });
+
       await addUser(userData);
-      
+
+      // Show success message
+      alert('User created successfully!');
+
       // Reset form only on success
       setNewUser({
         name: '',
@@ -104,11 +131,12 @@ export function UserManagement() {
         businessId: '',
         permissions: []
       });
-      
+
       setShowCreateModal(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create user:', error);
-      // Error is already handled by addUser function
+      const errorMessage = error?.message || 'Failed to create user. Please try again.';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
