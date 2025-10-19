@@ -117,6 +117,9 @@ export function JobManagement() {
     
     // First create or find customer
     const customerId = `customer-${Date.now()}`;
+    // Use current user's businessId or default business
+    const businessId = currentUser?.businessId || '00000000-0000-0000-0000-000000000001';
+
     const customerData = {
       name: newJob.customerName,
       email: newJob.customerEmail,
@@ -124,7 +127,7 @@ export function JobManagement() {
       mobile: newJob.customerMobile,
       address: newJob.customerAddress,
       postcode: newJob.customerPostcode,
-      businessId: currentUser?.businessId || 'business-1'
+      businessId: businessId
     };
     
     // Add customer to context (you'd need to import addCustomer from useData)
@@ -134,8 +137,8 @@ export function JobManagement() {
       customerId: customerId,
       jobType: 'installation' as const,
       status: 'pending' as const,
-      employeeId: 'employee-1',
-      businessId: 'business-1',
+      employeeId: currentUser?.id || null,
+      businessId: businessId,
       scheduledTime: '09:00',
       quotation: parseFloat(newJob.quotation) || 0,
       images: [],

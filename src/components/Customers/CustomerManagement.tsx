@@ -64,6 +64,9 @@ export function CustomerManagement() {
 
   const handleCreateCustomerAsync = async () => {
     try {
+      // Ensure we have a valid businessId
+      const businessId = currentUser?.businessId || '00000000-0000-0000-0000-000000000001';
+
       const customerData = {
         name: newCustomer.name,
         email: newCustomer.email,
@@ -71,7 +74,7 @@ export function CustomerManagement() {
         mobile: newCustomer.mobile,
         address: newCustomer.address,
         postcode: newCustomer.postcode,
-        businessId: currentUser?.businessId || 'business-1'
+        businessId: businessId
       };
       
       await addCustomer(customerData);
