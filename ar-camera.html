@@ -553,8 +553,17 @@
     function closeWindow() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
+        stream = null;
       }
-      window.close();
+
+      // Check if opened in popup or same window
+      if (window.opener && !window.opener.closed) {
+        // Opened as popup - close it
+        window.close();
+      } else {
+        // Opened in same window - go back to dashboard
+        window.location.href = '/';
+      }
     }
 
     // Product overlay variables
@@ -673,18 +682,25 @@
       }
     }, { passive: false });
 
-    // Prevent back button during camera use
+    // Handle back button navigation
     history.pushState(null, '', location.href);
     window.addEventListener('popstate', () => {
       if (stream) {
         const confirmLeave = confirm('Camera is active. Do you want to close it?');
         if (confirmLeave) {
           isNavigating = true;
-          stream.getTracks().forEach(track => track.stop());
-          window.close();
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+          }
+          // Go back to dashboard
+          window.location.href = '/';
         } else {
           history.pushState(null, '', location.href);
         }
+      } else {
+        // No camera active, just go back
+        window.location.href = '/';
       }
     });
 
