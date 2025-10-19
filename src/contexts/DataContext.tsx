@@ -420,9 +420,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setJobs(prev => [...prev, newJob]);
 
       showSuccessMessage('Job created successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating job:', error);
-      showErrorMessage('Failed to create job.');
+      const errorMessage = error?.message || 'Failed to create job.';
+      showErrorMessage(errorMessage);
+      throw error;
     }
   };
 
@@ -480,9 +482,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       showSuccessMessage('Customer added successfully!');
       return newCustomer;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating customer:', error);
-      showErrorMessage('Failed to create customer.');
+      const errorMessage = error?.message || 'Failed to create customer.';
+      showErrorMessage(errorMessage);
       throw error;
     }
   };

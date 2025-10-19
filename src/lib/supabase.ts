@@ -248,6 +248,8 @@ export class DatabaseService {
 
   static async createCustomer(customerData: any): Promise<Customer> {
     try {
+      console.log('📝 Creating customer with data:', customerData);
+
       const { data, error } = await supabase
         .from('customers')
         .insert([{
@@ -262,7 +264,16 @@ export class DatabaseService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase error creating customer:', error);
+        throw new Error(`Failed to create customer: ${error.message} (Code: ${error.code})`);
+      }
+
+      if (!data) {
+        throw new Error('No data returned from customer creation');
+      }
+
+      console.log('✅ Customer created successfully:', data.id);
 
       return {
         id: data.id,
@@ -275,8 +286,8 @@ export class DatabaseService {
         businessId: data.business_id,
         createdAt: data.created_at
       };
-    } catch (error) {
-      console.error('Error creating customer:', error);
+    } catch (error: any) {
+      console.error('❌ Error creating customer:', error);
       throw error;
     }
   }
@@ -387,8 +398,15 @@ export class DatabaseService {
       // Format the scheduled date to include time
       const scheduledDateTime = jobData.scheduledDate + ' ' + (jobData.scheduledTime || '09:00');
 
+      // Generate a unique ID using timestamp + random string to prevent conflicts
+      const generateJobId = () => {
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 9);
+        return `JOB-${timestamp}-${random}`;
+      };
+
       const insertData = {
-        id: jobData.id || `JOB-${Date.now()}`,
+        id: jobData.id || generateJobId(),
         title: jobData.title,
         description: jobData.description || '',
         status: jobData.status || 'pending',
