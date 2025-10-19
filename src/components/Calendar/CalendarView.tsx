@@ -68,9 +68,38 @@ export function CalendarView() {
   };
 
   const getEventsForDate = (date: Date) => {
-    return calendarEvents.filter(event => 
+    return calendarEvents.filter(event =>
       event.date.toDateString() === date.toDateString()
     );
+  };
+
+  const getWeekDays = (date: Date) => {
+    const week = [];
+    const start = new Date(date);
+    start.setDate(date.getDate() - date.getDay());
+
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(start);
+      day.setDate(start.getDate() + i);
+      week.push(day);
+    }
+    return week;
+  };
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(prev.getDate() + (direction === 'prev' ? -7 : 7));
+      return newDate;
+    });
+  };
+
+  const navigateDay = (direction: 'prev' | 'next') => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(prev.getDate() + (direction === 'prev' ? -1 : 1));
+      return newDate;
+    });
   };
 
   const monthNames = [
@@ -101,16 +130,26 @@ export function CalendarView() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => navigateMonth('prev')}
+              onClick={() => {
+                if (view === 'month') navigateMonth('prev');
+                else if (view === 'week') navigateWeek('prev');
+                else navigateDay('prev');
+              }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
             <h2 className="text-xl font-semibold text-gray-900">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+              {view === 'month' && `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
+              {view === 'week' && `Week of ${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`}
+              {view === 'day' && `${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`}
             </h2>
             <button
-              onClick={() => navigateMonth('next')}
+              onClick={() => {
+                if (view === 'month') navigateMonth('next');
+                else if (view === 'week') navigateWeek('next');
+                else navigateDay('next');
+              }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ChevronRight className="w-5 h-5 text-gray-600" />
@@ -134,59 +173,151 @@ export function CalendarView() {
           </div>
         </div>
 
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {/* Day headers */}
-          {dayNames.map((day) => (
-            <div key={day} className="p-3 text-center text-sm font-medium text-gray-600 bg-gray-50 rounded-lg">
-              {day}
-            </div>
-          ))}
-          
-          {/* Calendar days */}
-          {getDaysInMonth(currentDate).map((date, index) => (
-            <div
-              key={index}
-              className={`min-h-[120px] p-2 border border-gray-100 rounded-lg ${
-                date ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
-              } transition-colors`}
-            >
-              {date && (
-                <>
-                  <div className={`text-sm font-medium mb-2 ${
-                    date.toDateString() === new Date().toDateString()
-                      ? 'text-blue-600'
-                      : 'text-gray-900'
-                  }`}>
-                    {date.getDate()}
+        {/* Calendar Grid - Month View */}
+        {view === 'month' && (
+          <div className="grid grid-cols-7 gap-1">
+            {/* Day headers */}
+            {dayNames.map((day) => (
+              <div key={day} className="p-3 text-center text-sm font-medium text-gray-600 bg-gray-50 rounded-lg">
+                {day}
+              </div>
+            ))}
+
+            {/* Calendar days */}
+            {getDaysInMonth(currentDate).map((date, index) => (
+              <div
+                key={index}
+                className={`min-h-[120px] p-2 border border-gray-100 rounded-lg ${
+                  date ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
+                } transition-colors`}
+              >
+                {date && (
+                  <>
+                    <div className={`text-sm font-medium mb-2 ${
+                      date.toDateString() === new Date().toDateString()
+                        ? 'text-blue-600'
+                        : 'text-gray-900'
+                    }`}>
+                      {date.getDate()}
+                    </div>
+
+                    {/* Events for this date */}
+                    <div className="space-y-1">
+                      {getEventsForDate(date).map((event) => (
+                        <div
+                          key={event.id}
+                          onClick={() => {
+                            setSelectedJob(event.jobData);
+                            setShowJobModal(true);
+                          }}
+                          className={`p-1 rounded text-xs font-medium truncate cursor-pointer ${
+                            event.status === 'confirmed'
+                              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                              : event.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                              : 'bg-green-100 text-green-800 hover:bg-green-200'
+                          }`}
+                        >
+                          {event.time} - {event.title}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Calendar Grid - Week View */}
+        {view === 'week' && (
+          <div className="grid grid-cols-7 gap-1">
+            {/* Day headers */}
+            {getWeekDays(currentDate).map((date) => (
+              <div key={date.toISOString()} className="p-3 text-center bg-gray-50 rounded-lg">
+                <div className="text-xs font-medium text-gray-600">{dayNames[date.getDay()]}</div>
+                <div className={`text-lg font-semibold mt-1 ${
+                  date.toDateString() === new Date().toDateString()
+                    ? 'text-blue-600'
+                    : 'text-gray-900'
+                }`}>
+                  {date.getDate()}
+                </div>
+              </div>
+            ))}
+
+            {/* Week days with events */}
+            {getWeekDays(currentDate).map((date) => (
+              <div
+                key={date.toISOString()}
+                className="min-h-[400px] p-2 border border-gray-100 rounded-lg bg-white"
+              >
+                <div className="space-y-2">
+                  {getEventsForDate(date).map((event) => (
+                    <div
+                      key={event.id}
+                      onClick={() => {
+                        setSelectedJob(event.jobData);
+                        setShowJobModal(true);
+                      }}
+                      className={`p-2 rounded text-sm cursor-pointer ${
+                        event.status === 'confirmed'
+                          ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                          : event.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                          : 'bg-green-100 text-green-800 hover:bg-green-200'
+                      }`}
+                    >
+                      <div className="font-medium">{event.time}</div>
+                      <div className="truncate">{event.title}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Calendar Grid - Day View */}
+        {view === 'day' && (
+          <div className="space-y-2">
+            {Array.from({ length: 24 }, (_, hour) => {
+              const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+              const eventsAtTime = getEventsForDate(currentDate).filter(event =>
+                event.time.startsWith(hour.toString().padStart(2, '0'))
+              );
+
+              return (
+                <div key={hour} className="flex border-b border-gray-100">
+                  <div className="w-20 p-2 text-sm text-gray-600 font-medium">
+                    {timeSlot}
                   </div>
-                  
-                  {/* Events for this date */}
-                  <div className="space-y-1">
-                    {getEventsForDate(date).map((event) => (
+                  <div className="flex-1 p-2 min-h-[60px]">
+                    {eventsAtTime.map((event) => (
                       <div
                         key={event.id}
                         onClick={() => {
                           setSelectedJob(event.jobData);
                           setShowJobModal(true);
                         }}
-                        className={`p-1 rounded text-xs font-medium truncate ${
+                        className={`p-3 rounded mb-1 cursor-pointer ${
                           event.status === 'confirmed'
-                            ? 'bg-blue-100 text-blue-800'
+                            ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
                             : event.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800'
+                            ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                            : 'bg-green-100 text-green-800 hover:bg-green-200'
                         }`}
                       >
-                        {event.time} - {event.title}
+                        <div className="font-medium">{event.title}</div>
+                        <div className="text-sm">{event.time} - {event.customer}</div>
                       </div>
                     ))}
                   </div>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Upcoming Events */}

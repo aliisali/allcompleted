@@ -104,6 +104,10 @@ export function JobWorkflow({ job, onUpdateJob, onClose }: JobWorkflowProps) {
         }
         break;
       case 'signature':
+        onUpdateJob({
+          status: 'completed',
+          completedDate: new Date().toISOString()
+        });
         setCurrentStep('complete');
         break;
     }
