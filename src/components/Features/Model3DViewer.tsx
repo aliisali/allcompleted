@@ -143,7 +143,7 @@ export function Model3DViewer() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">3D Model Viewer</h1>
-          <p className="text-gray-600 mt-2">Interactive 3D rendering powered by CSS 3D transforms - Drag to rotate, scroll to zoom</p>
+          <p className="text-gray-600 mt-2">Interactive 3D rendering powered by Three.js - Drag to rotate, scroll to zoom</p>
         </div>
         <button
           onClick={loadAvailableModels}
@@ -192,8 +192,12 @@ export function Model3DViewer() {
           ) : (
             <div className="text-center py-8">
               <Cube className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">No models yet</p>
-              <p className="text-xs text-gray-400 mt-1">Upload images in Model Converter</p>
+              <p className="text-sm font-medium text-gray-700 mb-2">No models yet</p>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Upload images in<br />
+                <span className="font-medium text-blue-600">3D Model Converter</span><br />
+                (Admin menu)
+              </p>
             </div>
           )}
         </div>
@@ -310,10 +314,19 @@ export function Model3DViewer() {
               <div className="text-center max-w-md">
                 <Cube className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No 3D Models Available</h3>
-                <p className="text-gray-600 mb-4">Upload images in the 3D Model Converter to create 3D models.</p>
-                <p className="text-sm text-gray-500">
+                <p className="text-gray-600 mb-4">Upload images in the <strong>3D Model Converter</strong> (Admin menu) to create 3D models.</p>
+                <p className="text-sm text-gray-500 mb-6">
                   Models will appear here automatically after conversion is complete.
                 </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800 font-medium mb-2">💡 Getting Started:</p>
+                  <ol className="text-sm text-blue-700 text-left space-y-1">
+                    <li>1. Go to Admin → 3D Model Converter</li>
+                    <li>2. Upload a product image (JPG, PNG)</li>
+                    <li>3. Wait for conversion to complete</li>
+                    <li>4. View your 3D model here!</li>
+                  </ol>
+                </div>
               </div>
             </div>
           )}
