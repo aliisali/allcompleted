@@ -398,15 +398,8 @@ export class DatabaseService {
       // Format the scheduled date to include time
       const scheduledDateTime = jobData.scheduledDate + ' ' + (jobData.scheduledTime || '09:00');
 
-      // Generate a unique ID using timestamp + random string to prevent conflicts
-      const generateJobId = () => {
-        const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 9);
-        return `JOB-${timestamp}-${random}`;
-      };
-
+      // Database will auto-generate UUID for id
       const insertData = {
-        id: jobData.id || generateJobId(),
         title: jobData.title,
         description: jobData.description || '',
         status: jobData.status || 'pending',
