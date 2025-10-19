@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, Camera, Check, ArrowRight } from 'lucide-react';
+import { Package, Camera, Check, ArrowRight, X, Info } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { Job, SelectedProduct } from '../../types';
 import { ARCameraCapture } from '../ARModule/ARCameraCapture';
@@ -17,6 +17,8 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
   const [currentProduct, setCurrentProduct] = useState<any>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [showProductDetail, setShowProductDetail] = useState(false);
+  const [detailProduct, setDetailProduct] = useState<any>(null);
 
   console.log('📦 ProductSelection: Products available:', products.length);
   console.log('📦 ProductSelection: Loading state:', loading);
@@ -167,15 +169,23 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProducts.map(product => (
           <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-32 object-cover rounded-lg mb-3"
-            />
-            <h4 className="font-medium text-gray-900 mb-1">{product.name}</h4>
-            <p className="text-sm text-gray-600 mb-2">{product.category}</p>
-            <p className="text-lg font-bold text-blue-600 mb-3">${product.price}</p>
-            
+            <div
+              onClick={() => {
+                setDetailProduct(product);
+                setShowProductDetail(true);
+              }}
+              className="cursor-pointer"
+            >
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-32 object-cover rounded-lg mb-3 hover:opacity-90 transition-opacity"
+              />
+              <h4 className="font-medium text-gray-900 mb-1 hover:text-blue-600 transition-colors">{product.name}</h4>
+              <p className="text-sm text-gray-600 mb-2">{product.category}</p>
+              <p className="text-lg font-bold text-blue-600 mb-3">${product.price}</p>
+            </div>
+
             <div className="flex space-x-2">
               <button
                 onClick={() => handleProductSelect(product)}
@@ -261,6 +271,117 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
                 <span className="text-lg">
                   ${selectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0).toFixed(2)}
                 </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product Detail Modal */}
+      {showProductDetail && detailProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-gray-900">Product Details</h3>
+              <button
+                onClick={() => {
+                  setShowProductDetail(false);
+                  setDetailProduct(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-6">
+                <img
+                  src={detailProduct.image}
+                  alt={detailProduct.name}
+                  className="w-full h-64 object-cover rounded-lg shadow-md"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-2xl font-bold text-gray-900 mb-2">{detailProduct.name}</h4>
+                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                    {detailProduct.category}
+                  </span>
+                </div>
+
+                <div className="flex items-baseline space-x-2">
+                  <span className="text-3xl font-bold text-blue-600">${detailProduct.price}</span>
+                  <span className="text-gray-500">per unit</span>
+                </div>
+
+                {detailProduct.description && (
+                  <div>
+                    <h5 className="font-semibold text-gray-900 mb-2">Description</h5>
+                    <p className="text-gray-700 leading-relaxed">{detailProduct.description}</p>
+                  </div>
+                )}
+
+                {detailProduct.specifications && detailProduct.specifications.length > 0 && (
+                  <div>
+                    <h5 className="font-semibold text-gray-900 mb-2">Specifications</h5>
+                    <ul className="space-y-2">
+                      {detailProduct.specifications.map((spec: string, index: number) => (
+                        <li key={index} className="flex items-start">
+                          <Check className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-gray-700">{spec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+                    <Info className="w-4 h-4" />
+                    <span>Status: {detailProduct.isActive ? 'Active' : 'Inactive'}</span>
+                  </div>
+                  {detailProduct.model3d && (
+                    <div className="flex items-center space-x-2 text-sm text-green-600">
+                      <Check className="w-4 h-4" />
+                      <span>3D Model Available</span>
+                    </div>
+                  )}
+                  {detailProduct.arModel && (
+                    <div className="flex items-center space-x-2 text-sm text-purple-600">
+                      <Camera className="w-4 h-4" />
+                      <span>AR Ready</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 flex space-x-3">
+                <button
+                  onClick={() => {
+                    handleProductSelect(detailProduct);
+                    setShowProductDetail(false);
+                  }}
+                  className={`flex-1 px-6 py-3 rounded-lg transition-all font-medium ${
+                    selectedProducts.some(p => p.productId === detailProduct.id)
+                      ? 'bg-green-600 text-white shadow-lg'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  <Package className="w-5 h-5 mr-2 inline" />
+                  {selectedProducts.some(p => p.productId === detailProduct.id) ? 'Selected' : 'Select Product'}
+                </button>
+                <button
+                  onClick={() => {
+                    handleARDemo(detailProduct);
+                    setShowProductDetail(false);
+                  }}
+                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                >
+                  <Camera className="w-5 h-5 mr-2 inline" />
+                  AR Demo
+                </button>
               </div>
             </div>
           </div>
