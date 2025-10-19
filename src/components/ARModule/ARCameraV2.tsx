@@ -30,25 +30,45 @@ export default function ARCameraV2() {
   const startCamera = async () => {
     try {
       setPermissionError(null);
+      console.log('📹 Starting AR camera...');
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setPermissionError('Camera is not supported on this device or browser.');
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
+      const constraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920, max: 1920 },
+          height: { ideal: 1080, max: 1080 }
+        },
+        audio: false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('✅ Camera stream obtained');
 
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setCameraActive(true);
-        setPermissionError(null);
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('webkit-playsinline', 'true');
+
+        videoRef.current.onloadedmetadata = () => {
+          console.log('✅ Video metadata loaded');
+          videoRef.current?.play().then(() => {
+            console.log('✅ Video playing');
+            setCameraActive(true);
+            setPermissionError(null);
+          }).catch(err => {
+            console.error('❌ Play failed:', err);
+            setPermissionError('Failed to start video playback. Please try again.');
+          });
+        };
       }
     } catch (error: any) {
-      console.error('Camera error:', error);
+      console.error('❌ Camera error:', error);
 
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
         setPermissionError('Camera permission denied. Please allow camera access in your browser settings.');
@@ -56,8 +76,10 @@ export default function ARCameraV2() {
         setPermissionError('No camera found on this device.');
       } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
         setPermissionError('Camera is already in use by another application.');
+      } else if (error.name === 'AbortError') {
+        setPermissionError('Camera access was interrupted. Please try again.');
       } else {
-        setPermissionError('Unable to access camera. Please check your browser permissions.');
+        setPermissionError(`Unable to access camera: ${error.message || 'Unknown error'}`);
       }
     }
   };

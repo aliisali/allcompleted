@@ -40,27 +40,42 @@ export default function ARCameraModule() {
       }
 
       console.log('📹 Requesting camera access...');
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const constraints = {
         video: {
-          facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
-      });
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920, max: 1920 },
+          height: { ideal: 1080, max: 1080 }
+        },
+        audio: false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
       console.log('✅ Camera stream obtained');
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        console.log('✅ Video playing');
-        setShowCamera(true);
-        setPermissionError(null);
-        requestAnimationFrame(renderFrame);
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('webkit-playsinline', 'true');
+
+        videoRef.current.onloadedmetadata = () => {
+          console.log('✅ Video metadata loaded');
+          videoRef.current?.play().then(() => {
+            console.log('✅ Video playing');
+            setShowCamera(true);
+            setPermissionError(null);
+            setTimeout(() => {
+              requestAnimationFrame(renderFrame);
+            }, 100);
+          }).catch(err => {
+            console.error('❌ Play failed:', err);
+            setPermissionError('Failed to start video playback. Please try again.');
+          });
+        };
       }
     } catch (error: any) {
-      console.error('Camera error:', error);
+      console.error('❌ Camera error:', error);
 
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
         setPermissionError('Camera permission denied. Please allow camera access in your browser settings.');
@@ -68,8 +83,10 @@ export default function ARCameraModule() {
         setPermissionError('No camera found on this device.');
       } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
         setPermissionError('Camera is already in use by another application.');
+      } else if (error.name === 'AbortError') {
+        setPermissionError('Camera access was interrupted. Please try again.');
       } else {
-        setPermissionError('Unable to access camera. Please check your browser permissions.');
+        setPermissionError(`Unable to access camera: ${error.message || 'Unknown error'}`);
       }
     }
   };
@@ -83,13 +100,20 @@ export default function ARCameraModule() {
   };
 
   const renderFrame = () => {
-    if (!showCamera || !videoRef.current || !canvasRef.current) return;
+    if (!showCamera || !videoRef.current || !canvasRef.current) {
+      return;
+    }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
 
-    if (!ctx || !video.videoWidth) {
+    if (!ctx) {
+      requestAnimationFrame(renderFrame);
+      return;
+    }
+
+    if (!video.videoWidth || video.readyState < 2) {
       requestAnimationFrame(renderFrame);
       return;
     }
@@ -203,13 +227,15 @@ export default function ARCameraModule() {
 
   if (showCamera) {
     return (
-      <div className="fixed inset-0 z-50 bg-black">
+      <div className="fixed inset-0 z-50 bg-black" style={{ touchAction: 'none' }}>
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
+          webkit-playsinline="true"
           className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectFit: 'cover' }}
         />
 
         <canvas

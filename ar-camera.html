@@ -301,7 +301,7 @@
   </div>
 
   <div id="camera-container">
-    <video id="video" autoplay playsinline muted></video>
+    <video id="video" autoplay playsinline muted webkit-playsinline="true" style="background: #000;"></video>
     <canvas id="canvas"></canvas>
     <img id="product-overlay" style="display: none;" />
 
@@ -438,35 +438,59 @@
 
         if (stream) {
           stream.getTracks().forEach(track => track.stop());
+          stream = null;
         }
 
         console.log('📹 Requesting camera with facingMode:', facingMode);
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: facingMode,
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
-        });
 
+        const constraints = {
+          video: {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1920, max: 1920 },
+            height: { ideal: 1080, max: 1080 }
+          },
+          audio: false
+        };
+
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
         console.log('✅ Camera stream obtained');
+
         video.srcObject = stream;
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
 
         video.onloadedmetadata = () => {
           console.log('📹 Video metadata loaded:', video.videoWidth, 'x', video.videoHeight);
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
+
+          video.play().then(() => {
+            console.log('✅ Video playing - readyState:', video.readyState);
+
+            setTimeout(() => {
+              if (video.videoWidth > 0 && video.videoHeight > 0) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                loading.style.display = 'none';
+                topBar.style.display = 'flex';
+                controls.style.display = 'flex';
+
+                renderFrame();
+                loadProducts();
+              } else {
+                console.warn('⚠️ Video dimensions not ready, retrying...');
+                setTimeout(() => startCamera(), 500);
+              }
+            }, 200);
+          }).catch(playErr => {
+            console.error('❌ Video play failed:', playErr);
+            throw new Error('Failed to start video playback: ' + playErr.message);
+          });
         };
 
-        await video.play();
-        console.log('✅ Video playing');
-
-        loading.style.display = 'none';
-        topBar.style.display = 'flex';
-        controls.style.display = 'flex';
-
-        renderFrame();
-        loadProducts();
+        video.onerror = (e) => {
+          console.error('❌ Video element error:', e);
+          throw new Error('Video element failed to load stream');
+        };
 
       } catch (err) {
         console.error('❌ Camera error:', err);
@@ -479,6 +503,8 @@
           errorMessage.textContent = 'No camera found on this device.';
         } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
           errorMessage.textContent = 'Camera is already in use by another application.';
+        } else if (err.name === 'AbortError') {
+          errorMessage.textContent = 'Camera access was interrupted. Please try again.';
         } else {
           errorMessage.textContent = err.message || 'Unable to access camera. Please check your browser permissions.';
         }
@@ -486,13 +512,20 @@
     }
 
     function renderFrame() {
-      if (!video.videoWidth) {
+      if (!stream || !video.srcObject) {
+        return;
+      }
+
+      if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
         requestAnimationFrame(renderFrame);
         return;
       }
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+      }
+
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       requestAnimationFrame(renderFrame);
@@ -624,15 +657,54 @@
     // Resize handler
     window.addEventListener('resize', positionProduct);
 
-    // Start camera on load
-    startCamera();
-
-    // Stop camera when page unloads
-    window.addEventListener('beforeunload', () => {
-      if (stream) {
+    // Prevent accidental navigation
+    let isNavigating = false;
+    window.addEventListener('beforeunload', (e) => {
+      if (stream && !isNavigating) {
         stream.getTracks().forEach(track => track.stop());
       }
     });
+
+    // Prevent pull-to-refresh on mobile
+    document.body.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 1 || window.scrollY > 0) return;
+      if (e.target === document.body || e.target === video || e.target === canvas) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // Prevent back button during camera use
+    history.pushState(null, '', location.href);
+    window.addEventListener('popstate', () => {
+      if (stream) {
+        const confirmLeave = confirm('Camera is active. Do you want to close it?');
+        if (confirmLeave) {
+          isNavigating = true;
+          stream.getTracks().forEach(track => track.stop());
+          window.close();
+        } else {
+          history.pushState(null, '', location.href);
+        }
+      }
+    });
+
+    // Handle visibility changes (app going to background)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        console.log('📱 App went to background, keeping camera stream');
+      } else {
+        console.log('📱 App came to foreground');
+        if (stream && video.readyState < 2) {
+          console.log('🔄 Restarting camera after background');
+          startCamera();
+        }
+      }
+    });
+
+    // Start camera on load with a slight delay for mobile
+    setTimeout(() => {
+      startCamera();
+    }, 100);
   </script>
 </body>
 </html>
