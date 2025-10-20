@@ -71,15 +71,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const loadData = async () => {
     try {
       console.log('📊 Loading data from Supabase...');
+      setLoading(true);
 
       if (DatabaseService.isAvailable()) {
         const [usersData, businessesData, jobsData, customersData, productsData, notificationsData] = await Promise.all([
-          DatabaseService.getUsers(),
-          DatabaseService.getBusinesses(),
-          DatabaseService.getJobs(),
-          DatabaseService.getCustomers(),
-          DatabaseService.getProducts(),
-          DatabaseService.getNotifications()
+          DatabaseService.getUsers().catch(err => { console.error('Error loading users:', err); return []; }),
+          DatabaseService.getBusinesses().catch(err => { console.error('Error loading businesses:', err); return []; }),
+          DatabaseService.getJobs().catch(err => { console.error('Error loading jobs:', err); return []; }),
+          DatabaseService.getCustomers().catch(err => { console.error('Error loading customers:', err); return []; }),
+          DatabaseService.getProducts().catch(err => { console.error('Error loading products:', err); return []; }),
+          DatabaseService.getNotifications().catch(err => { console.error('Error loading notifications:', err); return []; })
         ]);
 
         setUsers(usersData);
@@ -94,33 +95,60 @@ export function DataProvider({ children }: { children: ReactNode }) {
           businesses: businessesData.length,
           jobs: jobsData.length,
           customers: customersData.length,
-          products: productsData.length
+          products: productsData.length,
+          notifications: notificationsData.length
         });
+
+        // Show warning if any data is empty
+        if (jobsData.length === 0) console.warn('⚠️ No jobs found in database');
+        if (productsData.length === 0) console.warn('⚠️ No products found in database');
       } else {
         console.log('📝 Supabase not available, using localStorage...');
         LocalStorageService.initializeData();
 
+        const localUsers = LocalStorageService.getUsers();
+        const localBusinesses = LocalStorageService.getBusinesses();
+        const localJobs = LocalStorageService.getJobs();
+        const localCustomers = LocalStorageService.getCustomers();
+        const localProducts = LocalStorageService.getProducts();
+        const localNotifications = LocalStorageService.getNotifications();
+
+        setUsers(localUsers);
+        setBusinesses(localBusinesses);
+        setJobs(localJobs);
+        setCustomers(localCustomers);
+        setProducts(localProducts);
+        setNotifications(localNotifications);
+
+        console.log('✅ LocalStorage data loaded:', {
+          users: localUsers.length,
+          businesses: localBusinesses.length,
+          jobs: localJobs.length,
+          customers: localCustomers.length,
+          products: localProducts.length
+        });
+      }
+
+    } catch (error: any) {
+      console.error('❌ Error loading data:', error);
+      showErrorMessage(`Failed to load data: ${error?.message || 'Unknown error'}`);
+
+      console.log('📝 Falling back to localStorage...');
+      try {
+        LocalStorageService.initializeData();
         setUsers(LocalStorageService.getUsers());
         setBusinesses(LocalStorageService.getBusinesses());
         setJobs(LocalStorageService.getJobs());
         setCustomers(LocalStorageService.getCustomers());
         setProducts(LocalStorageService.getProducts());
         setNotifications(LocalStorageService.getNotifications());
+      } catch (fallbackError) {
+        console.error('❌ Even localStorage failed:', fallbackError);
+        showErrorMessage('Critical error: Unable to load any data');
       }
-
-    } catch (error) {
-      console.error('❌ Error loading data:', error);
-      console.log('📝 Falling back to localStorage...');
-      LocalStorageService.initializeData();
-      setUsers(LocalStorageService.getUsers());
-      setBusinesses(LocalStorageService.getBusinesses());
-      setJobs(LocalStorageService.getJobs());
-      setCustomers(LocalStorageService.getCustomers());
-      setProducts(LocalStorageService.getProducts());
-      setNotifications(LocalStorageService.getNotifications());
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   // Enhanced data persistence with multiple backends
@@ -431,20 +459,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateJob = async (id: string, jobData: Partial<Job>) => {
     try {
+      console.log('🔄 Updating job:', id, 'with data:', jobData);
+
       if (DatabaseService.isAvailable()) {
         await DatabaseService.updateJob(id, jobData);
+        console.log('✅ Job updated in database');
       } else {
         await saveToMultipleSources('update', 'job', jobData, id);
       }
 
+      // Update local state immediately for responsive UI
       setJobs(prev => prev.map(job =>
         job.id === id ? { ...job, ...jobData } : job
       ));
 
+      // If status changed to completed, refresh to ensure data consistency
+      if (jobData.status === 'completed' || jobData.status === 'in-progress') {
+        console.log('🔄 Refreshing job data after status change...');
+        setTimeout(() => refreshData(), 500);
+      }
+
       showSuccessMessage('Job updated successfully!');
-    } catch (error) {
-      console.error('Error updating job:', error);
-      showErrorMessage('Failed to update job.');
+    } catch (error: any) {
+      console.error('❌ Error updating job:', error);
+      const errorMessage = error?.message || 'Failed to update job.';
+      showErrorMessage(errorMessage);
+      throw error;
     }
   };
 

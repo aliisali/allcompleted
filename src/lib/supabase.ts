@@ -346,23 +346,25 @@ export class DatabaseService {
           id: job.id,
           title: job.title,
           description: job.description || '',
-          jobType: 'measurement' as const,
+          jobType: (job.job_type || 'measurement') as 'measurement' | 'installation',
           status: job.status || 'pending',
           customerId: job.customer_id,
           employeeId: job.employee_id || null,
           businessId: job.business_id,
           scheduledDate: job.scheduled_date,
-          scheduledTime: new Date(job.scheduled_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          scheduledTime: job.scheduled_time || new Date(job.scheduled_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           completedDate: job.completed_date || undefined,
+          startTime: job.start_time || undefined,
           quotation: parseFloat(job.quotation) || 0,
           invoice: parseFloat(job.invoice) || 0,
           signature: job.signature || '',
           images: job.images || [],
           documents: job.documents || [],
           checklist: job.checklist || [],
-          measurements: [],
-          selectedProducts: [],
-          jobHistory: [],
+          measurements: job.measurements || [],
+          selectedProducts: job.selected_products || [],
+          jobHistory: job.job_history || [],
+          customerReference: job.customer_reference || '',
           createdAt: job.created_at
         };
 
@@ -470,18 +472,26 @@ export class DatabaseService {
       if (jobData.title) updateData.title = jobData.title;
       if (jobData.description !== undefined) updateData.description = jobData.description;
       if (jobData.status) updateData.status = jobData.status;
+      if (jobData.jobType) updateData.job_type = jobData.jobType;
       if (jobData.employeeId !== undefined) {
         updateData.employee_id = jobData.employeeId || null;
         console.log('✅ Setting employee_id to:', updateData.employee_id);
       }
+      if (jobData.customerId) updateData.customer_id = jobData.customerId;
       if (jobData.scheduledDate) updateData.scheduled_date = jobData.scheduledDate;
+      if (jobData.scheduledTime) updateData.scheduled_time = jobData.scheduledTime;
       if (jobData.completedDate !== undefined) updateData.completed_date = jobData.completedDate;
+      if (jobData.startTime !== undefined) updateData.start_time = jobData.startTime;
       if (jobData.quotation !== undefined) updateData.quotation = jobData.quotation;
       if (jobData.invoice !== undefined) updateData.invoice = jobData.invoice;
       if (jobData.signature !== undefined) updateData.signature = jobData.signature;
       if (jobData.images) updateData.images = jobData.images;
       if (jobData.documents) updateData.documents = jobData.documents;
       if (jobData.checklist) updateData.checklist = jobData.checklist;
+      if (jobData.measurements) updateData.measurements = jobData.measurements;
+      if (jobData.selectedProducts) updateData.selected_products = jobData.selectedProducts;
+      if (jobData.jobHistory) updateData.job_history = jobData.jobHistory;
+      if (jobData.customerReference) updateData.customer_reference = jobData.customerReference;
 
       console.log('📤 Updating job in Supabase with:', updateData);
 
