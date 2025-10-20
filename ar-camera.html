@@ -2,269 +2,129 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AR Camera - BlindsCloud</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       overflow: hidden;
       background: #000;
+      position: fixed;
+      width: 100%;
+      height: 100%;
     }
 
     #camera-container {
       position: fixed;
       inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       background: #000;
     }
 
     #video {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      display: block;
-      -webkit-transform: translateZ(0);
-      transform: translateZ(0);
+      z-index: 1;
     }
 
-    #canvas {
+    #overlay-canvas {
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      z-index: 2;
       pointer-events: none;
-      display: none;
     }
 
     #controls {
-      position: absolute;
+      position: fixed;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(10px);
-      padding: 20px;
-      border-radius: 16px;
-      display: flex;
+      padding: 15px 20px;
+      border-radius: 50px;
+      display: none;
       gap: 15px;
       z-index: 10;
+      flex-direction: row;
+      align-items: center;
     }
 
     #top-bar {
-      position: absolute;
+      position: fixed;
       top: 20px;
       left: 20px;
       right: 20px;
-      display: flex;
+      display: none;
       justify-content: space-between;
       align-items: center;
       z-index: 10;
     }
 
     .info-box {
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(10px);
-      padding: 12px 20px;
-      border-radius: 12px;
-      color: white;
-      font-weight: bold;
-    }
-
-    button {
-      padding: 15px 30px;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.3s;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    .btn-capture {
-      background: #10b981;
-      color: white;
-    }
-
-    .btn-capture:hover {
-      background: #059669;
-    }
-
-    .btn-switch {
-      background: #6b7280;
-      color: white;
-    }
-
-    .btn-switch:hover {
-      background: #4b5563;
-    }
-
-    .btn-close {
-      background: #ef4444;
-      color: white;
-      padding: 12px;
-      border-radius: 50%;
-      width: 48px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-close:hover {
-      background: #dc2626;
-    }
-
-    .btn-upload {
-      background: #3b82f6;
-      color: white;
-    }
-
-    .btn-upload:hover {
-      background: #2563eb;
-    }
-
-    #product-overlay {
-      position: absolute;
-      pointer-events: none;
-      z-index: 5;
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    #product-selector {
-      position: absolute;
-      top: 80px;
-      left: 20px;
       background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 15px;
-      max-height: 70vh;
-      overflow-y: auto;
-      z-index: 10;
-      display: none;
-      max-width: 300px;
-    }
-
-    #product-selector.show {
-      display: block;
-    }
-
-    .product-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .product-item:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: translateX(5px);
-    }
-
-    .product-item img {
-      width: 50px;
-      height: 50px;
-      object-fit: cover;
-      border-radius: 6px;
-    }
-
-    .product-item-info {
-      flex: 1;
-    }
-
-    .product-item-name {
+      padding: 10px 20px;
+      border-radius: 30px;
       color: white;
       font-weight: bold;
       font-size: 14px;
     }
 
-    .product-item-category {
-      color: #9ca3af;
-      font-size: 12px;
-    }
-
-    .btn-products {
-      background: #8b5cf6;
-      color: white;
-    }
-
-    .btn-products:hover {
-      background: #7c3aed;
-    }
-
-    #error {
-      position: absolute;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-      padding: 40px;
-      z-index: 5;
-    }
-
-    .error-content {
-      background: rgba(239, 68, 68, 0.2);
-      border: 2px solid #ef4444;
-      border-radius: 16px;
-      padding: 40px;
-      max-width: 500px;
-      text-align: center;
-      color: white;
-    }
-
-    .error-content h2 {
-      color: #ef4444;
-      margin-bottom: 20px;
+    button {
+      border: none;
+      border-radius: 50%;
       font-size: 24px;
-    }
-
-    .error-content p {
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
-
-    .error-content button {
-      background: #10b981;
-      color: white;
-      width: 100%;
-    }
-
-    #loading {
-      position: absolute;
-      inset: 0;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: all 0.2s;
+      background: rgba(255, 255, 255, 0.2);
+      width: 56px;
+      height: 56px;
+      backdrop-filter: blur(10px);
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .btn-capture {
+      background: #10b981;
+      width: 64px;
+      height: 64px;
+    }
+
+    .btn-close {
+      background: #ef4444;
+      width: 48px;
+      height: 48px;
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       background: #000;
       color: white;
-      font-size: 20px;
-      z-index: 5;
+      z-index: 100;
     }
 
     .spinner {
@@ -274,522 +134,304 @@
       border-top-color: white;
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin: 0 auto 20px;
+      margin-bottom: 20px;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    #error {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      padding: 40px;
+      z-index: 100;
+      color: white;
+      text-align: center;
+    }
+
+    .error-content {
+      background: rgba(239, 68, 68, 0.2);
+      border: 2px solid #ef4444;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 400px;
+    }
+
+    .error-content h2 {
+      color: #ef4444;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    .error-content p {
+      margin-bottom: 15px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .error-content button {
+      background: #10b981;
+      width: 100%;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+    }
+
+    #debug {
+      position: fixed;
+      top: 80px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #10b981;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 12px;
+      z-index: 10;
+      max-width: calc(100% - 40px);
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
   <div id="loading">
-    <div>
-      <div class="spinner"></div>
-      <p id="loading-text">Starting camera...</p>
-      <p id="debug-info" style="font-size: 12px; color: #999; margin-top: 10px;"></p>
-    </div>
+    <div class="spinner"></div>
+    <p id="loading-text">Initializing camera...</p>
   </div>
 
   <div id="error">
     <div class="error-content">
-      <h2>Camera Access Required</h2>
+      <h2>Camera Error</h2>
       <p id="error-message"></p>
-      <p style="font-size: 14px; margin-top: 20px;">
-        <strong>To enable camera:</strong><br>
-        1. Click the camera icon in your browser address bar<br>
-        2. Select "Allow" for camera permissions<br>
-        3. Click the button below to try again
-      </p>
-      <button onclick="startCamera()">Try Again</button>
+      <button onclick="window.location.reload()">Retry</button>
     </div>
   </div>
+
+  <div id="debug"></div>
 
   <div id="camera-container">
-    <video id="video" autoplay playsinline muted webkit-playsinline="true" style="background: #000;"></video>
-    <canvas id="canvas"></canvas>
-    <img id="product-overlay" style="display: none;" />
+    <video id="video" playsinline autoplay muted></video>
+    <canvas id="overlay-canvas"></canvas>
 
-    <div id="top-bar" style="display: none;">
-      <div class="info-box">
-        <span>🎥 AR Camera Active</span>
-      </div>
-      <button class="btn-close" onclick="closeWindow()">✕</button>
+    <div id="top-bar">
+      <div class="info-box">🎥 AR Camera</div>
+      <button class="btn-close" onclick="closeCamera()">✕</button>
     </div>
 
-    <div id="product-selector">
-      <h3 style="color: white; margin-bottom: 15px; font-size: 16px;">Select Product</h3>
-      <div id="products-list"></div>
-    </div>
-
-    <div id="controls" style="display: none;">
-      <button class="btn-products" onclick="toggleProductSelector()">
-        <span>🏷️</span> Products
-      </button>
-      <button class="btn-upload" onclick="document.getElementById('product-upload').click()">
-        <span>📤</span> Upload
-      </button>
-      <button class="btn-switch" onclick="switchCamera()">
-        <span>🔄</span> Switch
-      </button>
-      <button class="btn-capture" onclick="capturePhoto()">
-        <span>📸</span> Capture
-      </button>
+    <div id="controls">
+      <button onclick="switchCamera()" title="Switch Camera">🔄</button>
+      <button class="btn-capture" onclick="capturePhoto()" title="Capture">📸</button>
     </div>
   </div>
 
-  <input type="file" id="product-upload" accept="image/*" onchange="uploadProduct(event)" />
-
   <script>
-    // Supabase Configuration
-    const SUPABASE_URL = 'https://ttnavyechfmlfrlayhxs.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0bmF2eWVjaGZtbGZybGF5aHhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NzIwNjMsImV4cCI6MjA3NjM0ODA2M30.KtZqtAGh5somDSPIjvhIdK4d3QA-uKbYzkqT-41vGqA';
-
-    let stream = null;
-    let facingMode = 'environment';
     const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
+    const canvas = document.getElementById('overlay-canvas');
     const ctx = canvas.getContext('2d');
     const loading = document.getElementById('loading');
     const loadingText = document.getElementById('loading-text');
-    const debugInfo = document.getElementById('debug-info');
     const error = document.getElementById('error');
     const errorMessage = document.getElementById('error-message');
     const topBar = document.getElementById('top-bar');
     const controls = document.getElementById('controls');
+    const debug = document.getElementById('debug');
 
-    // Debug helper
-    function updateDebug(message) {
-      console.log(message);
-      if (debugInfo) {
-        debugInfo.textContent = message;
-      }
-    }
+    let stream = null;
+    let facingMode = 'environment';
+    let animationId = null;
 
-    // Load products from Supabase
-    async function loadProducts() {
-      try {
-        console.log('📦 Loading products from Supabase...');
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?is_active=eq.true&select=id,name,category,image`, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to load products');
-        }
-
-        const products = await response.json();
-        console.log('✅ Loaded products:', products.length);
-        renderProducts(products);
-      } catch (err) {
-        console.error('❌ Error loading products:', err);
-      }
-    }
-
-    function renderProducts(products) {
-      const productsList = document.getElementById('products-list');
-      productsList.innerHTML = '';
-
-      if (products.length === 0) {
-        productsList.innerHTML = '<p style="color: #9ca3af; text-align: center;">No products available</p>';
-        return;
-      }
-
-      products.forEach(product => {
-        const item = document.createElement('div');
-        item.className = 'product-item';
-        item.onclick = () => selectProduct(product);
-
-        const imageUrl = product.image && product.image.startsWith('data:')
-          ? product.image
-          : (product.image || 'https://via.placeholder.com/50');
-
-        item.innerHTML = `
-          <img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/50'">
-          <div class="product-item-info">
-            <div class="product-item-name">${product.name}</div>
-            <div class="product-item-category">${product.category}</div>
-          </div>
-        `;
-
-        productsList.appendChild(item);
-      });
-    }
-
-    function toggleProductSelector() {
-      const selector = document.getElementById('product-selector');
-      selector.classList.toggle('show');
-    }
-
-    function selectProduct(product) {
-      console.log('✅ Selected product:', product.name);
-      const imageUrl = product.image;
-
-      if (!imageUrl) {
-        alert('This product has no image available');
-        return;
-      }
-
-      const overlay = document.getElementById('product-overlay');
-      overlay.src = imageUrl;
-      overlay.style.display = 'block';
-      positionProduct();
-
-      toggleProductSelector();
+    function log(msg) {
+      console.log(msg);
+      debug.textContent = msg;
     }
 
     async function startCamera() {
       try {
-        updateDebug('Initializing camera...');
-        loading.style.display = 'flex';
-        error.style.display = 'none';
-        loadingText.textContent = 'Starting camera...';
+        log('Starting camera...');
 
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('Camera is not supported on this device or browser.');
-        }
-
+        // Stop existing stream
         if (stream) {
           stream.getTracks().forEach(track => track.stop());
-          stream = null;
         }
 
-        updateDebug(`Requesting ${facingMode} camera...`);
-
+        // Request camera with simple constraints
         const constraints = {
           video: {
             facingMode: facingMode,
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
           },
           audio: false
         };
 
+        log(`Requesting ${facingMode} camera...`);
         stream = await navigator.mediaDevices.getUserMedia(constraints);
-        updateDebug('Camera stream obtained');
 
+        log('Stream obtained, connecting to video...');
         video.srcObject = stream;
-        video.setAttribute('playsinline', 'true');
-        video.setAttribute('webkit-playsinline', 'true');
-        video.setAttribute('autoplay', 'true');
-        video.setAttribute('muted', 'true');
-        video.muted = true;
 
-        // Handle both metadata loaded and can play events
-        let cameraReady = false;
+        // Wait for video to be ready
+        await new Promise((resolve, reject) => {
+          video.onloadedmetadata = () => {
+            log('Metadata loaded, playing...');
+            video.play()
+              .then(() => {
+                log('Video playing!');
+                resolve();
+              })
+              .catch(reject);
+          };
+          video.onerror = reject;
 
-        const onCameraReady = () => {
-          if (cameraReady) return;
+          setTimeout(() => reject(new Error('Video timeout')), 10000);
+        });
 
-          updateDebug(`Video: ${video.videoWidth}x${video.videoHeight}`);
+        // Wait for actual video dimensions
+        let attempts = 0;
+        while ((video.videoWidth === 0 || video.videoHeight === 0) && attempts < 50) {
+          await new Promise(r => setTimeout(r, 100));
+          attempts++;
+        }
 
-          if (video.videoWidth > 0 && video.videoHeight > 0) {
-            cameraReady = true;
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+          throw new Error('Video dimensions not available');
+        }
 
-            loading.style.display = 'none';
-            topBar.style.display = 'flex';
-            controls.style.display = 'flex';
+        log(`Video ready: ${video.videoWidth}x${video.videoHeight}`);
 
-            // Show canvas for capture on mobile
-            canvas.style.display = 'block';
+        // Setup canvas
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
 
-            renderFrame();
-            loadProducts();
-          } else {
-            updateDebug('Waiting for video dimensions...');
-            setTimeout(onCameraReady, 200);
-          }
-        };
+        // Hide loading, show UI
+        loading.style.display = 'none';
+        topBar.style.display = 'flex';
+        controls.style.display = 'flex';
 
-        video.onloadedmetadata = () => {
-          updateDebug('Metadata loaded, starting playback...');
-          loadingText.textContent = 'Loading video...';
-          video.play().then(() => {
-            updateDebug('Video playing');
-            loadingText.textContent = 'Preparing camera...';
-            // Wait a bit for video to be fully ready on mobile
-            setTimeout(onCameraReady, 500);
-          }).catch(playErr => {
-            console.error('❌ Video play failed:', playErr);
-            updateDebug('Play failed: ' + playErr.message);
-            throw new Error('Failed to start video playback: ' + playErr.message);
-          });
-        };
-
-        video.oncanplay = () => {
-          updateDebug('Video can play');
-          setTimeout(onCameraReady, 300);
-        };
-
-        video.onerror = (e) => {
-          console.error('❌ Video element error:', e);
-          throw new Error('Video element failed to load stream');
-        };
+        // Start rendering
+        renderLoop();
 
       } catch (err) {
-        console.error('❌ Camera error:', err);
-        updateDebug('Error: ' + err.message);
+        console.error('Camera error:', err);
+        log('ERROR: ' + err.message);
+
         loading.style.display = 'none';
         error.style.display = 'flex';
 
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          errorMessage.textContent = 'Camera permission denied. Please allow camera access in your browser settings.';
-        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        if (err.name === 'NotAllowedError') {
+          errorMessage.textContent = 'Camera permission denied. Please allow camera access and reload the page.';
+        } else if (err.name === 'NotFoundError') {
           errorMessage.textContent = 'No camera found on this device.';
-        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-          errorMessage.textContent = 'Camera is already in use by another application.';
-        } else if (err.name === 'AbortError') {
-          errorMessage.textContent = 'Camera access was interrupted. Please try again.';
+        } else if (err.name === 'NotReadableError') {
+          errorMessage.textContent = 'Camera is in use by another application.';
         } else if (err.name === 'OverconstrainedError') {
-          errorMessage.textContent = 'Your device camera does not support the requested settings. Trying with basic settings...';
-          // Retry with simpler constraints
+          errorMessage.textContent = 'Camera constraints not supported. Trying front camera...';
           setTimeout(() => {
             facingMode = 'user';
-            startCamera();
-          }, 1000);
+            window.location.reload();
+          }, 2000);
         } else {
-          errorMessage.textContent = err.message || 'Unable to access camera. Please check your browser permissions.';
+          errorMessage.textContent = err.message || 'Failed to access camera. Please check your browser settings.';
         }
       }
     }
 
-    // Add timeout for camera initialization
-    let initTimeout = null;
-    const originalStartCamera = startCamera;
-    startCamera = function() {
-      if (initTimeout) clearTimeout(initTimeout);
+    function renderLoop() {
+      if (!stream || !video.srcObject) return;
 
-      initTimeout = setTimeout(() => {
-        if (loading.style.display === 'flex') {
-          console.warn('⏱️ Camera initialization timeout');
-          updateDebug('Timeout - retrying with basic settings...');
-          if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
-          }
-          facingMode = 'user';
-          originalStartCamera();
-        }
-      }, 10000); // 10 second timeout
-
-      return originalStartCamera();
-    };
-
-    function renderFrame() {
-      if (!stream || !video.srcObject) {
-        return;
+      // Draw video frame to canvas for overlay effects
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       }
 
-      if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
-        requestAnimationFrame(renderFrame);
-        return;
-      }
-
-      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-      }
-
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      requestAnimationFrame(renderFrame);
+      animationId = requestAnimationFrame(renderLoop);
     }
 
     function switchCamera() {
       facingMode = facingMode === 'environment' ? 'user' : 'environment';
-      console.log('🔄 Switching to:', facingMode);
+      log('Switching camera...');
+      loading.style.display = 'flex';
+      topBar.style.display = 'none';
+      controls.style.display = 'none';
       startCamera();
     }
 
     function capturePhoto() {
-      const link = document.createElement('a');
-      link.download = `ar-photo-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      console.log('📸 Photo captured');
+      log('Capturing photo...');
 
+      // Create a temporary canvas for capture
+      const captureCanvas = document.createElement('canvas');
+      captureCanvas.width = video.videoWidth;
+      captureCanvas.height = video.videoHeight;
+      const captureCtx = captureCanvas.getContext('2d');
+
+      // Draw current video frame
+      captureCtx.drawImage(video, 0, 0);
+
+      // Download
+      const link = document.createElement('a');
+      link.download = `ar-photo-${Date.now()}.jpg`;
+      link.href = captureCanvas.toDataURL('image/jpeg', 0.95);
+      link.click();
+
+      // Flash effect
       const flash = document.createElement('div');
-      flash.style.cssText = 'position:fixed;inset:0;background:white;z-index:9999;animation:flash 0.3s';
+      flash.style.cssText = 'position:fixed;inset:0;background:white;z-index:9999;pointer-events:none;';
       document.body.appendChild(flash);
-      setTimeout(() => flash.remove(), 300);
+      setTimeout(() => flash.remove(), 150);
+
+      log('Photo captured!');
     }
 
-    function closeWindow() {
+    function closeCamera() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
-        stream = null;
       }
-
-      // Check if opened in popup or same window
-      if (window.opener && !window.opener.closed) {
-        // Opened as popup - close it
-        window.close();
-      } else {
-        // Opened in same window - go back to dashboard
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+      window.close();
+      setTimeout(() => {
         window.location.href = '/';
-      }
+      }, 100);
     }
 
-    // Product overlay variables
-    let productImage = null;
-    let productScale = 0.3;
-    let productX = 50; // percentage
-    let productY = 50; // percentage
-    let isDragging = false;
-
-    function uploadProduct(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        productImage = new Image();
-        productImage.onload = function() {
-          console.log('✅ Product image loaded');
-          const overlay = document.getElementById('product-overlay');
-          overlay.src = e.target.result;
-          overlay.style.display = 'block';
-          positionProduct();
-        };
-        productImage.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function positionProduct() {
-      const overlay = document.getElementById('product-overlay');
-      if (!overlay.src) return;
-
-      const containerWidth = window.innerWidth;
-      const containerHeight = window.innerHeight;
-
-      overlay.style.width = `${containerWidth * productScale}px`;
-      overlay.style.height = 'auto';
-      overlay.style.left = `${(productX / 100) * containerWidth}px`;
-      overlay.style.top = `${(productY / 100) * containerHeight}px`;
-      overlay.style.transform = 'translate(-50%, -50%)';
-    }
-
-    // Enable dragging of product
-    const cameraContainer = document.getElementById('camera-container');
-    cameraContainer.addEventListener('mousedown', (e) => {
-      const overlay = document.getElementById('product-overlay');
-      if (overlay.style.display === 'none') return;
-
-      isDragging = true;
-      updateProductPosition(e);
-    });
-
-    cameraContainer.addEventListener('mousemove', (e) => {
-      if (isDragging) {
-        updateProductPosition(e);
-      }
-    });
-
-    cameraContainer.addEventListener('mouseup', () => {
-      isDragging = false;
-    });
-
-    // Touch support for mobile
-    cameraContainer.addEventListener('touchstart', (e) => {
-      const overlay = document.getElementById('product-overlay');
-      if (overlay.style.display === 'none') return;
-
-      isDragging = true;
-      updateProductPosition(e.touches[0]);
-    });
-
-    cameraContainer.addEventListener('touchmove', (e) => {
-      if (isDragging) {
-        e.preventDefault();
-        updateProductPosition(e.touches[0]);
-      }
-    });
-
-    cameraContainer.addEventListener('touchend', () => {
-      isDragging = false;
-    });
-
-    function updateProductPosition(event) {
-      productX = (event.clientX / window.innerWidth) * 100;
-      productY = (event.clientY / window.innerHeight) * 100;
-      positionProduct();
-    }
-
-    // Zoom with mouse wheel
-    cameraContainer.addEventListener('wheel', (e) => {
-      const overlay = document.getElementById('product-overlay');
-      if (overlay.style.display === 'none') return;
-
-      e.preventDefault();
-      productScale += e.deltaY > 0 ? -0.02 : 0.02;
-      productScale = Math.max(0.1, Math.min(1, productScale));
-      positionProduct();
-    });
-
-    // Resize handler
-    window.addEventListener('resize', positionProduct);
-
-    // Prevent accidental navigation
-    let isNavigating = false;
-    window.addEventListener('beforeunload', (e) => {
-      if (stream && !isNavigating) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    });
-
-    // Prevent pull-to-refresh on mobile
+    // Prevent pull-to-refresh
     document.body.addEventListener('touchmove', (e) => {
-      if (e.touches.length > 1 || window.scrollY > 0) return;
-      if (e.target === document.body || e.target === video || e.target === canvas) {
-        e.preventDefault();
-      }
+      if (e.touches.length > 1) return;
+      e.preventDefault();
     }, { passive: false });
 
-    // Handle back button navigation
-    history.pushState(null, '', location.href);
-    window.addEventListener('popstate', () => {
-      if (stream) {
-        const confirmLeave = confirm('Camera is active. Do you want to close it?');
-        if (confirmLeave) {
-          isNavigating = true;
-          if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
-          }
-          // Go back to dashboard
-          window.location.href = '/';
-        } else {
-          history.pushState(null, '', location.href);
-        }
-      } else {
-        // No camera active, just go back
-        window.location.href = '/';
-      }
-    });
-
-    // Handle visibility changes (app going to background)
+    // Handle page visibility changes
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        console.log('📱 App went to background, keeping camera stream');
-      } else {
-        console.log('📱 App came to foreground');
-        if (stream && video.readyState < 2) {
-          console.log('🔄 Restarting camera after background');
-          startCamera();
-        }
+      if (!document.hidden && stream && video.paused) {
+        log('Resuming camera...');
+        video.play().catch(console.error);
       }
     });
 
-    // Start camera on load with a slight delay for mobile
-    setTimeout(() => {
-      startCamera();
-    }, 100);
+    // Cleanup on unload
+    window.addEventListener('beforeunload', () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    });
+
+    // Check camera support
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      loading.style.display = 'none';
+      error.style.display = 'flex';
+      errorMessage.textContent = 'Your browser does not support camera access. Please use a modern browser like Chrome, Safari, or Firefox.';
+    } else {
+      // Start camera after short delay
+      setTimeout(startCamera, 500);
+    }
   </script>
 </body>
 </html>
