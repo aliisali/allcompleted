@@ -160,7 +160,7 @@ export interface Notification {
   userId: string;
   title: string;
   message: string;
-  type: 'reminder' | 'job' | 'system';
+  type: 'reminder' | 'job' | 'system' | 'quotation_sent' | 'job_completed';
   read: boolean;
   createdAt: string;
 }

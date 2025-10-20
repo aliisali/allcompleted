@@ -7,6 +7,8 @@ import { QuotationScreen } from './QuotationScreen';
 import { PaymentScreen } from './PaymentScreen';
 import { SignatureCapture } from './SignatureCapture';
 import { useAuth } from '../../contexts/AuthContext';
+import { useData } from '../../contexts/DataContext';
+import { EmailService } from '../../services/EmailService';
 
 interface JobWorkflowProps {
   job: Job;
@@ -16,9 +18,39 @@ interface JobWorkflowProps {
 
 export function JobWorkflow({ job, onUpdateJob, onClose }: JobWorkflowProps) {
   const { user } = useAuth();
+  const { customers, addNotification } = useData();
   const [currentStep, setCurrentStep] = useState<'start' | 'products' | 'measurements' | 'quotation' | 'payment' | 'signature' | 'complete' | 'convert-to-installation'>('start');
   const [jobStartTime, setJobStartTime] = useState<string | null>(null);
   const [showConversionSuccess, setShowConversionSuccess] = useState(false);
+
+  const sendCompletionEmail = async () => {
+    try {
+      const customer = customers.find(c => c.id === job.customerId);
+      if (!customer) {
+        console.warn('Customer not found for job completion email');
+        return;
+      }
+
+      await EmailService.sendJobCompletionEmail({
+        customerName: customer.name,
+        customerEmail: customer.email,
+        jobTitle: job.title,
+        jobId: job.id,
+        completionDate: new Date().toISOString()
+      });
+
+      // Create notification
+      await addNotification({
+        userId: job.employeeId || '',
+        type: 'job_completed',
+        title: 'Job Completed',
+        message: `Job "${job.title}" completed and customer notified`,
+        read: false
+      });
+    } catch (error) {
+      console.error('Failed to send completion email:', error);
+    }
+  };
 
   const handleStartJob = () => {
     const startTime = new Date().toISOString();
@@ -109,6 +141,8 @@ export function JobWorkflow({ job, onUpdateJob, onClose }: JobWorkflowProps) {
           completedDate: new Date().toISOString()
         });
         setCurrentStep('complete');
+        // Send completion email
+        sendCompletionEmail();
         break;
     }
   };
@@ -246,6 +280,8 @@ export function JobWorkflow({ job, onUpdateJob, onClose }: JobWorkflowProps) {
                     completedDate: new Date().toISOString()
                   });
                   setCurrentStep('complete');
+                  // Send completion email
+                  sendCompletionEmail();
                 }}
                 className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
               >
