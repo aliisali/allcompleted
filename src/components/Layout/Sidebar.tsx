@@ -137,36 +137,8 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
                     console.log('🖱️ Sidebar: Clicked on', item.id);
 
                     if (item.id === 'ar-camera' || item.id === 'ar-camera-v2') {
-                      console.log('📹 Opening AR Camera...');
-                      try {
-                        // Check if device is mobile
-                        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-
-                        if (isMobile) {
-                          // On mobile, open in same window for better camera access
-                          console.log('📱 Mobile detected - opening in same window');
-                          window.location.href = '/ar-camera.html';
-                        } else {
-                          // On desktop, open in popup
-                          console.log('🖥️ Desktop detected - opening in popup');
-                          const width = 1400;
-                          const height = 900;
-                          const left = (window.screen.width - width) / 2;
-                          const top = (window.screen.height - height) / 2;
-                          const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`;
-
-                          const newWindow = window.open('/ar-camera.html', 'ARCamera', features);
-                          if (!newWindow) {
-                            // Fallback to same window if popup blocked
-                            console.log('⚠️ Popup blocked - opening in same window');
-                            window.location.href = '/ar-camera.html';
-                          }
-                        }
-                      } catch (error) {
-                        console.error('❌ Error opening AR Camera:', error);
-                        // Fallback to same window
-                        window.location.href = '/ar-camera.html';
-                      }
+                      console.log('📹 Opening AR Camera in new tab...');
+                      window.open('/ar-camera.html', '_blank');
                     } else {
                       onTabChange(item.id);
                     }
