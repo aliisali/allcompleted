@@ -1,28 +1,24 @@
 import React from 'react';
-import { useData } from '../../contexts/DataContext';
-import { 
-  ClipboardList, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  DollarSign, 
-  Users, 
+import { useRoleBasedData } from '../../hooks/useRoleBasedData';
+import {
+  ClipboardList,
+  CheckCircle,
+  XCircle,
+  Clock,
+  DollarSign,
+  Users,
   TrendingUp,
   Calendar
 } from 'lucide-react';
 
 export function BusinessDashboard() {
-  const { jobs, users, customers } = useData();
-  
-  // Calculate real stats from data
-  const completedJobs = jobs.filter(job => job.status === 'completed').length;
-  const pendingJobs = jobs.filter(job => job.status === 'pending').length;
-  const inProgressJobs = jobs.filter(job => job.status === 'in-progress').length;
-  const cancelledJobs = jobs.filter(job => job.status === 'cancelled').length;
-  const totalRevenue = jobs.filter(job => job.status === 'completed').reduce((sum, job) => sum + (job.invoice || job.quotation || 0), 0);
-  const activeEmployees = users.filter(user => user.role === 'employee' && user.isActive).length;
-  
-  const stats = [
+  // Use role-based filtering to ensure data isolation
+  const { jobs, users, customers, stats } = useRoleBasedData();
+
+  // Use pre-calculated stats from the hook
+  const { completedJobs, pendingJobs, inProgressJobs, cancelledJobs, totalRevenue, activeEmployees } = stats;
+
+  const statCards = [
     { label: 'Blinds Installations', value: jobs.length.toString(), icon: ClipboardList, color: 'bg-gradient-to-r from-blue-500 to-blue-600', change: '+18%' },
     { label: 'Completed Jobs', value: completedJobs.toString(), icon: CheckCircle, color: 'bg-gradient-to-r from-emerald-500 to-emerald-600', change: '+12%' },
     { label: 'Cancelled Jobs', value: cancelledJobs.toString(), icon: XCircle, color: 'bg-gradient-to-r from-red-500 to-red-600', change: '-5%' },
@@ -64,7 +60,7 @@ export function BusinessDashboard() {
 
       {/* Job Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-        {stats.map((stat, index) => {
+        {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <div key={index} className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-all duration-300">

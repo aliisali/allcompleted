@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useRoleBasedData } from '../../hooks/useRoleBasedData';
 import {
   ClipboardList,
   Calendar,
@@ -14,8 +15,10 @@ import {
 import { LoadingSpinner } from '../Layout/LoadingSpinner';
 
 export function EmployeeDashboard() {
-  const { jobs, notifications, customers, refreshData, markNotificationRead, deleteNotification, loading } = useData();
+  const { refreshData, markNotificationRead, deleteNotification, loading } = useData();
   const { user: currentUser } = useAuth();
+  // Use role-based data filtering for proper data isolation
+  const { jobs, notifications, customers } = useRoleBasedData();
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [expandedNotifications, setExpandedNotifications] = useState(false);
@@ -30,35 +33,10 @@ export function EmployeeDashboard() {
     return () => clearInterval(interval);
   }, [refreshData]);
 
-  // Filter jobs for current employee - only show jobs assigned to them
-  console.log('🔍 EmployeeDashboard: Current user details:', {
-    id: currentUser?.id,
-    email: currentUser?.email,
-    role: currentUser?.role,
-    businessId: currentUser?.businessId
-  });
-  console.log('📋 Total jobs available:', jobs.length);
+  // Jobs are already filtered by useRoleBasedData hook
+  console.log('📋 Employee jobs (role-filtered):', jobs.length);
 
-  // Log all jobs to see what we're working with
-  jobs.forEach(job => {
-    console.log('📋 Job:', {
-      id: job.id,
-      title: job.title,
-      employeeId: job.employeeId,
-      status: job.status,
-      businessId: job.businessId
-    });
-  });
-
-  const employeeJobs = jobs.filter(job => {
-    const isMatch = job.employeeId === currentUser?.id;
-    console.log(`🔍 Checking job ${job.id}: employeeId="${job.employeeId}" vs currentUser.id="${currentUser?.id}" => ${isMatch ? 'MATCH' : 'NO MATCH'}`);
-    return isMatch;
-  });
-
-  console.log('📋 Employee jobs found:', employeeJobs.length);
-
-  const todayJobs = employeeJobs.slice(0, 3);
+  const todayJobs = jobs.slice(0, 3);
   const completedToday = todayJobs.filter(job => job.status === 'completed').length;
   const pendingToday = todayJobs.filter(job => job.status === 'pending').length;
   
@@ -144,7 +122,7 @@ export function EmployeeDashboard() {
             <h2 className="text-xl font-semibold text-gray-900">Today's Installations</h2>
             <Calendar className="w-5 h-5 text-gray-500" />
           </div>
-          {employeeJobs.length === 0 ? (
+          {jobs.length === 0 ? (
             <div className="text-center py-12">
               <ClipboardList className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">No jobs assigned yet</p>
