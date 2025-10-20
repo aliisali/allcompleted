@@ -33,6 +33,7 @@ import { WorkingHoursManager } from './Employee/WorkingHours';
 import { SubscriptionManagement } from './Admin/SubscriptionManagement';
 import { SubscriptionPage } from './Business/SubscriptionPage';
 import { SubscriptionBanner } from './Layout/SubscriptionBanner';
+import { BackgroundRemoverManager } from './Admin/BackgroundRemoverManager';
 
 export function MainApp() {
   const { user, logout } = useAuth();
@@ -60,6 +61,7 @@ export function MainApp() {
         case 'email-manager': return <EmailManager />;
         case 'business-settings': return <BusinessSettingsManager />;
         case 'subscriptions': return <SubscriptionManagement />;
+        case 'background-remover': return <BackgroundRemoverManager />;
         default: return <AdminDashboard />;
       }
     }

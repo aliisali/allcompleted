@@ -35,6 +35,7 @@ export interface Business {
   features: string[];
   subscription: 'basic' | 'premium' | 'enterprise';
   vrViewEnabled?: boolean;
+  bgRemoverEnabled?: boolean;
 }
 
 export interface Job {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Building2, Calendar, ClipboardList, FileText, Settings, BarChart3, Camera, Mail, Bell, Package, LogOut, Headphones, Code, Shield, Cuboid as Cube, ChevronLeft, ChevronRight, Menu, Clock, Sparkles, CreditCard, User } from 'lucide-react';
+import { Users, Building2, Calendar, ClipboardList, FileText, Settings, BarChart3, Camera, Mail, Bell, Package, LogOut, Headphones, Code, Shield, Cuboid as Cube, ChevronLeft, ChevronRight, Menu, Clock, Sparkles, CreditCard, User, Wand2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useModulePermissions } from '../../hooks/useModulePermissions';
 import { Logo } from './Logo';
@@ -57,6 +57,7 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
           { id: 'html-manager', label: 'HTML Manager', icon: Code },
           { id: 'email-manager', label: 'Email Manager', icon: Mail },
           { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
+          { id: 'background-remover', label: 'Background Remover', icon: Wand2 },
         ];
       case 'business':
         return [

@@ -21,8 +21,15 @@ export function ModulePermissions() {
     {
       id: 'ar-camera',
       name: 'AR Camera',
-      description: 'Advanced AR camera with 2D to 3D conversion and background removal',
+      description: 'Advanced AR camera with 2D to 3D conversion',
       icon: Headphones,
+      requiresPermission: true
+    },
+    {
+      id: 'background_remover',
+      name: 'Background Remover',
+      description: 'AI-powered background removal for product images in AR',
+      icon: Shield,
       requiresPermission: true
     }
   ];
