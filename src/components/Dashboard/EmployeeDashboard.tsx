@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  ClipboardList, 
-  Calendar, 
-  CheckCircle, 
-  Clock, 
-  Camera, 
+import {
+  ClipboardList,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Camera,
   FileText,
   Bell,
   MapPin
 } from 'lucide-react';
+import { LoadingSpinner } from '../Layout/LoadingSpinner';
 
 export function EmployeeDashboard() {
-  const { jobs, notifications, customers, refreshData, markNotificationRead, deleteNotification } = useData();
+  const { jobs, notifications, customers, refreshData, markNotificationRead, deleteNotification, loading } = useData();
   const { user: currentUser } = useAuth();
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
@@ -111,7 +112,12 @@ export function EmployeeDashboard() {
         </button>
       </div>
 
+      {/* Loading State */}
+      {loading && <LoadingSpinner message="Loading dashboard..." />}
+
       {/* Today's Stats */}
+      {!loading && (
+      <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
         {todayStats.map((stat, index) => {
           const Icon = stat.icon;
@@ -339,6 +345,8 @@ export function EmployeeDashboard() {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );

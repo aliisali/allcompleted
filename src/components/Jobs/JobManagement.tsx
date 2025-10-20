@@ -5,12 +5,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { CreateJobModal } from './CreateJobModal';
 import { JobWorkflow } from './JobWorkflow';
 import { JobDetailsModal } from './JobDetailsModal';
+import { LoadingSpinner } from '../Layout/LoadingSpinner';
 
 export function JobManagement() {
-  const { jobs, addJob, deleteJob, updateJob, customers, users, refreshData } = useData();
+  const { jobs, addJob, deleteJob, updateJob, customers, users, refreshData, loading } = useData();
   const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [actionLoading, setActionLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showWorkflow, setShowWorkflow] = useState(false);
   const [showJobDetails, setShowJobDetails] = useState(false);
@@ -266,9 +268,13 @@ export function JobManagement() {
         </div>
       </div>
 
+      {/* Loading State */}
+      {loading && <LoadingSpinner message="Loading jobs..." />}
+
       {/* Jobs List */}
-      <div className="space-y-4">
-        {filteredJobs.map((job) => (
+      {!loading && (
+        <div className="space-y-4">
+          {filteredJobs.map((job) => (
           <div key={job.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -406,12 +412,22 @@ export function JobManagement() {
                     Location
                   </button>
                   {canDeleteJob(job) && (
-                    <button 
-                      onClick={() => deleteJob(job.id)}
-                      className="flex items-center px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors cursor-pointer"
+                    <button
+                      onClick={async () => {
+                        if (window.confirm('Are you sure you want to delete this job?')) {
+                          setActionLoading(true);
+                          try {
+                            await deleteJob(job.id);
+                          } finally {
+                            setActionLoading(false);
+                          }
+                        }
+                      }}
+                      disabled={actionLoading}
+                      className="flex items-center px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
+                      {actionLoading ? 'Deleting...' : 'Delete'}
                     </button>
                   )}
                 </div>
@@ -424,13 +440,14 @@ export function JobManagement() {
             </div>
           </div>
         ))}
-      </div>
 
-      {filteredJobs.length === 0 && (
-        <div className="text-center py-12">
-          <ClipboardList className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No jobs found matching your criteria</p>
-        </div>
+        {filteredJobs.length === 0 && (
+          <div className="text-center py-12">
+            <ClipboardList className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No jobs found matching your criteria</p>
+          </div>
+        )}
+      </div>
       )}
 
       
