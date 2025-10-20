@@ -3,28 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AR Camera - BlindsCloud</title>
+  <title>AR Camera</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       overflow: hidden;
       background: #000;
+      width: 100vw;
+      height: 100vh;
       position: fixed;
-      width: 100%;
-      height: 100%;
-    }
-
-    #camera-container {
-      position: fixed;
-      inset: 0;
-      background: #000;
     }
 
     #video {
@@ -37,108 +29,45 @@
       z-index: 1;
     }
 
-    #overlay-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 2;
-      pointer-events: none;
-    }
-
     #controls {
       position: fixed;
-      bottom: 20px;
+      bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(10px);
-      padding: 15px 20px;
-      border-radius: 50px;
+      z-index: 100;
       display: none;
-      gap: 15px;
-      z-index: 10;
+      gap: 20px;
       flex-direction: row;
-      align-items: center;
-    }
-
-    #top-bar {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      right: 20px;
-      display: none;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 10;
-    }
-
-    .info-box {
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(10px);
-      padding: 10px 20px;
-      border-radius: 30px;
-      color: white;
-      font-weight: bold;
-      font-size: 14px;
     }
 
     button {
-      border: none;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      font-size: 24px;
+      border: none;
+      font-size: 28px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      background: rgba(255, 255, 255, 0.2);
-      width: 56px;
-      height: 56px;
-      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
 
-    button:active {
-      transform: scale(0.95);
-    }
-
-    .btn-capture {
+    .capture {
+      width: 70px;
+      height: 70px;
       background: #10b981;
-      width: 64px;
-      height: 64px;
-    }
-
-    .btn-close {
-      background: #ef4444;
-      width: 48px;
-      height: 48px;
+      color: white;
     }
 
     #loading {
       position: fixed;
       inset: 0;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       background: #000;
       color: white;
-      z-index: 100;
-    }
-
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+      z-index: 1000;
+      font-size: 18px;
     }
 
     #error {
@@ -148,290 +77,120 @@
       align-items: center;
       justify-content: center;
       background: #000;
-      padding: 40px;
-      z-index: 100;
       color: white;
+      z-index: 1000;
+      padding: 20px;
       text-align: center;
+      flex-direction: column;
+      gap: 20px;
     }
 
-    .error-content {
-      background: rgba(239, 68, 68, 0.2);
-      border: 2px solid #ef4444;
-      border-radius: 16px;
-      padding: 30px;
-      max-width: 400px;
-    }
-
-    .error-content h2 {
-      color: #ef4444;
-      margin-bottom: 15px;
-      font-size: 20px;
-    }
-
-    .error-content p {
-      margin-bottom: 15px;
-      line-height: 1.5;
-      font-size: 14px;
-    }
-
-    .error-content button {
-      background: #10b981;
-      width: 100%;
-      border-radius: 12px;
-      padding: 15px;
-      font-size: 16px;
-      font-weight: bold;
-      color: white;
-    }
-
-    #debug {
+    #close {
       position: fixed;
-      top: 80px;
-      left: 20px;
-      background: rgba(0, 0, 0, 0.8);
-      color: #10b981;
-      padding: 10px 15px;
-      border-radius: 8px;
-      font-size: 12px;
-      z-index: 10;
-      max-width: calc(100% - 40px);
-      word-break: break-word;
+      top: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 24px;
+      z-index: 100;
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div id="loading">
-    <div class="spinner"></div>
-    <p id="loading-text">Initializing camera...</p>
-  </div>
-
+  <div id="loading">Starting camera...</div>
   <div id="error">
-    <div class="error-content">
-      <h2>Camera Error</h2>
-      <p id="error-message"></p>
-      <button onclick="window.location.reload()">Retry</button>
-    </div>
+    <div id="error-msg"></div>
+    <button onclick="location.reload()" style="width:auto;padding:15px 30px;border-radius:10px;">Retry</button>
   </div>
 
-  <div id="debug"></div>
+  <video id="video" playsinline autoplay muted></video>
 
-  <div id="camera-container">
-    <video id="video" playsinline autoplay muted></video>
-    <canvas id="overlay-canvas"></canvas>
+  <button id="close" onclick="window.close() || (window.location.href='/')">✕</button>
 
-    <div id="top-bar">
-      <div class="info-box">🎥 AR Camera</div>
-      <button class="btn-close" onclick="closeCamera()">✕</button>
-    </div>
-
-    <div id="controls">
-      <button onclick="switchCamera()" title="Switch Camera">🔄</button>
-      <button class="btn-capture" onclick="capturePhoto()" title="Capture">📸</button>
-    </div>
+  <div id="controls">
+    <button onclick="switchCam()">🔄</button>
+    <button class="capture" onclick="capture()">📸</button>
   </div>
 
   <script>
     const video = document.getElementById('video');
-    const canvas = document.getElementById('overlay-canvas');
-    const ctx = canvas.getContext('2d');
     const loading = document.getElementById('loading');
-    const loadingText = document.getElementById('loading-text');
     const error = document.getElementById('error');
-    const errorMessage = document.getElementById('error-message');
-    const topBar = document.getElementById('top-bar');
+    const errorMsg = document.getElementById('error-msg');
     const controls = document.getElementById('controls');
-    const debug = document.getElementById('debug');
+    const closeBtn = document.getElementById('close');
 
     let stream = null;
-    let facingMode = 'environment';
-    let animationId = null;
+    let facing = 'environment';
 
-    function log(msg) {
-      console.log(msg);
-      debug.textContent = msg;
-    }
-
-    async function startCamera() {
+    async function startCam() {
       try {
-        log('Starting camera...');
-
-        // Stop existing stream
         if (stream) {
-          stream.getTracks().forEach(track => track.stop());
+          stream.getTracks().forEach(t => t.stop());
         }
 
-        // Request camera with simple constraints
-        const constraints = {
+        stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: facingMode,
+            facingMode: facing,
             width: { ideal: 1280 },
             height: { ideal: 720 }
           },
           audio: false
-        };
-
-        log(`Requesting ${facingMode} camera...`);
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-        log('Stream obtained, connecting to video...');
-        video.srcObject = stream;
-
-        // Wait for video to be ready
-        await new Promise((resolve, reject) => {
-          video.onloadedmetadata = () => {
-            log('Metadata loaded, playing...');
-            video.play()
-              .then(() => {
-                log('Video playing!');
-                resolve();
-              })
-              .catch(reject);
-          };
-          video.onerror = reject;
-
-          setTimeout(() => reject(new Error('Video timeout')), 10000);
         });
 
-        // Wait for actual video dimensions
-        let attempts = 0;
-        while ((video.videoWidth === 0 || video.videoHeight === 0) && attempts < 50) {
-          await new Promise(r => setTimeout(r, 100));
-          attempts++;
-        }
+        video.srcObject = stream;
 
-        if (video.videoWidth === 0 || video.videoHeight === 0) {
-          throw new Error('Video dimensions not available');
-        }
+        video.onloadedmetadata = () => {
+          video.play();
 
-        log(`Video ready: ${video.videoWidth}x${video.videoHeight}`);
-
-        // Setup canvas
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        // Hide loading, show UI
-        loading.style.display = 'none';
-        topBar.style.display = 'flex';
-        controls.style.display = 'flex';
-
-        // Start rendering
-        renderLoop();
+          setTimeout(() => {
+            loading.style.display = 'none';
+            controls.style.display = 'flex';
+            closeBtn.style.display = 'block';
+          }, 1000);
+        };
 
       } catch (err) {
-        console.error('Camera error:', err);
-        log('ERROR: ' + err.message);
-
+        console.error(err);
         loading.style.display = 'none';
         error.style.display = 'flex';
-
-        if (err.name === 'NotAllowedError') {
-          errorMessage.textContent = 'Camera permission denied. Please allow camera access and reload the page.';
-        } else if (err.name === 'NotFoundError') {
-          errorMessage.textContent = 'No camera found on this device.';
-        } else if (err.name === 'NotReadableError') {
-          errorMessage.textContent = 'Camera is in use by another application.';
-        } else if (err.name === 'OverconstrainedError') {
-          errorMessage.textContent = 'Camera constraints not supported. Trying front camera...';
-          setTimeout(() => {
-            facingMode = 'user';
-            window.location.reload();
-          }, 2000);
-        } else {
-          errorMessage.textContent = err.message || 'Failed to access camera. Please check your browser settings.';
-        }
+        errorMsg.textContent = err.name === 'NotAllowedError'
+          ? 'Camera permission denied. Please allow camera access.'
+          : 'Camera error: ' + err.message;
       }
     }
 
-    function renderLoop() {
-      if (!stream || !video.srcObject) return;
-
-      // Draw video frame to canvas for overlay effects
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      }
-
-      animationId = requestAnimationFrame(renderLoop);
-    }
-
-    function switchCamera() {
-      facingMode = facingMode === 'environment' ? 'user' : 'environment';
-      log('Switching camera...');
+    function switchCam() {
+      facing = facing === 'environment' ? 'user' : 'environment';
       loading.style.display = 'flex';
-      topBar.style.display = 'none';
       controls.style.display = 'none';
-      startCamera();
+      startCam();
     }
 
-    function capturePhoto() {
-      log('Capturing photo...');
+    function capture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
 
-      // Create a temporary canvas for capture
-      const captureCanvas = document.createElement('canvas');
-      captureCanvas.width = video.videoWidth;
-      captureCanvas.height = video.videoHeight;
-      const captureCtx = captureCanvas.getContext('2d');
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/jpeg');
+      a.download = 'photo-' + Date.now() + '.jpg';
+      a.click();
 
-      // Draw current video frame
-      captureCtx.drawImage(video, 0, 0);
-
-      // Download
-      const link = document.createElement('a');
-      link.download = `ar-photo-${Date.now()}.jpg`;
-      link.href = captureCanvas.toDataURL('image/jpeg', 0.95);
-      link.click();
-
-      // Flash effect
       const flash = document.createElement('div');
-      flash.style.cssText = 'position:fixed;inset:0;background:white;z-index:9999;pointer-events:none;';
+      flash.style.cssText = 'position:fixed;inset:0;background:white;z-index:9999';
       document.body.appendChild(flash);
-      setTimeout(() => flash.remove(), 150);
-
-      log('Photo captured!');
+      setTimeout(() => flash.remove(), 100);
     }
 
-    function closeCamera() {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-      window.close();
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
-    }
-
-    // Prevent pull-to-refresh
-    document.body.addEventListener('touchmove', (e) => {
-      if (e.touches.length > 1) return;
-      e.preventDefault();
-    }, { passive: false });
-
-    // Handle page visibility changes
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && stream && video.paused) {
-        log('Resuming camera...');
-        video.play().catch(console.error);
-      }
-    });
-
-    // Cleanup on unload
-    window.addEventListener('beforeunload', () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    });
-
-    // Check camera support
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      loading.style.display = 'none';
-      error.style.display = 'flex';
-      errorMessage.textContent = 'Your browser does not support camera access. Please use a modern browser like Chrome, Safari, or Firefox.';
-    } else {
-      // Start camera after short delay
-      setTimeout(startCamera, 500);
-    }
+    // Start immediately
+    startCam();
   </script>
 </body>
 </html>
