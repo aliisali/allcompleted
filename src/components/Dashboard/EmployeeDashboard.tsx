@@ -91,8 +91,8 @@ export function EmployeeDashboard() {
   };
 
   return (
-    <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-6">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-4 md:p-6">
+      <div className="mb-6 md:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Installation Dashboard</h1>
           <p className="text-gray-600 mt-2">Your daily blinds installation tasks and schedule</p>
@@ -112,7 +112,7 @@ export function EmployeeDashboard() {
       </div>
 
       {/* Today's Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
         {todayStats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -131,7 +131,7 @@ export function EmployeeDashboard() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 pb-6">
         {/* Today's Jobs */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">

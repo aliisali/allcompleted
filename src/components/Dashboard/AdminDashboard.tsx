@@ -17,14 +17,14 @@ export function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-6">
-      <div className="mb-8">
+    <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-4 md:p-6">
+      <div className="mb-6 md:mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="text-gray-600 mt-2">BlindsCloud platform overview and system management</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -44,7 +44,7 @@ export function AdminDashboard() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 pb-6">
         {/* Recent Activity */}
         <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
