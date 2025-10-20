@@ -505,4 +505,285 @@ If you didn't request this password reset, please contact your administrator imm
 
     return { subject, htmlBody, textBody };
   }
+
+  // Send quotation email
+  static async sendQuotationEmail(quotationData: {
+    customerName: string;
+    customerEmail: string;
+    jobTitle: string;
+    jobId: string;
+    quotationAmount: number;
+    jobDescription?: string;
+    items?: Array<{ name: string; quantity: number; price: number }>;
+  }): Promise<boolean> {
+    try {
+      const template = this.getQuotationEmailTemplate(quotationData);
+
+      const emailData: EmailData = {
+        to: quotationData.customerEmail,
+        subject: template.subject,
+        htmlBody: template.htmlBody,
+        textBody: template.textBody,
+        from: `${this.FROM_NAME} <${this.FROM_EMAIL}>`
+      };
+
+      console.log('📧 QUOTATION EMAIL SENT:', emailData);
+      this.storeEmailForDemo(emailData);
+
+      // Show notification
+      this.showEmailNotification(
+        `Quotation sent to ${quotationData.customerName}`,
+        quotationData.customerEmail
+      );
+
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to send quotation email:', error);
+      return false;
+    }
+  }
+
+  private static getQuotationEmailTemplate(quotationData: {
+    customerName: string;
+    customerEmail: string;
+    jobTitle: string;
+    jobId: string;
+    quotationAmount: number;
+    jobDescription?: string;
+    items?: Array<{ name: string; quantity: number; price: number }>;
+  }): EmailTemplate {
+    const subject = `Quotation for ${quotationData.jobTitle} - JobManager Pro`;
+
+    const itemsHtml = quotationData.items?.map(item => `
+      <tr>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${item.name}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">$${item.price.toFixed(2)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">$${(item.quantity * item.price).toFixed(2)}</td>
+      </tr>
+    `).join('') || '';
+
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f8fafc; }
+    .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    .header { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 32px 24px; text-align: center; }
+    .content { padding: 32px 24px; }
+    .quotation-box { background: #f1f5f9; border-radius: 8px; padding: 24px; margin: 24px 0; border-left: 4px solid #3b82f6; }
+    .amount { font-size: 32px; font-weight: bold; color: #1e293b; margin: 16px 0; }
+    .items-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .footer { background: #f8fafc; padding: 24px; text-align: center; color: #64748b; font-size: 14px; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💼 Quotation</h1>
+      <p>Job Estimate & Pricing Details</p>
+    </div>
+
+    <div class="content">
+      <h2>Dear ${quotationData.customerName},</h2>
+      <p>Thank you for choosing JobManager Pro. We are pleased to provide you with the following quotation for your project.</p>
+
+      <div class="quotation-box">
+        <h3 style="margin: 0 0 8px;">📋 Job Details</h3>
+        <p><strong>Job Title:</strong> ${quotationData.jobTitle}</p>
+        <p><strong>Job ID:</strong> ${quotationData.jobId}</p>
+        ${quotationData.jobDescription ? `<p><strong>Description:</strong> ${quotationData.jobDescription}</p>` : ''}
+
+        ${quotationData.items && quotationData.items.length > 0 ? `
+        <h3 style="margin: 24px 0 12px;">📦 Items & Services</h3>
+        <table class="items-table">
+          <thead>
+            <tr style="background: #e2e8f0;">
+              <th style="padding: 12px; text-align: left;">Item</th>
+              <th style="padding: 12px; text-align: center;">Qty</th>
+              <th style="padding: 12px; text-align: right;">Unit Price</th>
+              <th style="padding: 12px; text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+        ` : ''}
+
+        <div style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #cbd5e1;">
+          <h3 style="margin: 0 0 8px;">💰 Total Quotation</h3>
+          <div class="amount">$${quotationData.quotationAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+        </div>
+      </div>
+
+      <p>This quotation is valid for 30 days from the date of issue. If you have any questions or would like to proceed with this project, please contact us.</p>
+
+      <p>We look forward to working with you!</p>
+
+      <p>Best regards,<br>
+      <strong>The JobManager Pro Team</strong></p>
+    </div>
+
+    <div class="footer">
+      <p>© 2025 JobManager Pro. All rights reserved.</p>
+      <p>For inquiries, contact us at ${this.REPLY_TO}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const itemsText = quotationData.items?.map(item =>
+      `${item.name} - Qty: ${item.quantity} x $${item.price.toFixed(2)} = $${(item.quantity * item.price).toFixed(2)}`
+    ).join('\n') || '';
+
+    const textBody = `
+Quotation - JobManager Pro
+
+Dear ${quotationData.customerName},
+
+Thank you for choosing JobManager Pro. We are pleased to provide you with the following quotation for your project.
+
+JOB DETAILS:
+Job Title: ${quotationData.jobTitle}
+Job ID: ${quotationData.jobId}
+${quotationData.jobDescription ? `Description: ${quotationData.jobDescription}` : ''}
+
+${quotationData.items && quotationData.items.length > 0 ? `
+ITEMS & SERVICES:
+${itemsText}
+` : ''}
+
+TOTAL QUOTATION: $${quotationData.quotationAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+
+This quotation is valid for 30 days from the date of issue. If you have any questions or would like to proceed with this project, please contact us.
+
+We look forward to working with you!
+
+Best regards,
+The JobManager Pro Team
+
+© 2025 JobManager Pro. All rights reserved.
+For inquiries, contact us at ${this.REPLY_TO}
+`;
+
+    return { subject, htmlBody, textBody };
+  }
+
+  // Send job completion email
+  static async sendJobCompletionEmail(jobData: {
+    customerName: string;
+    customerEmail: string;
+    jobTitle: string;
+    jobId: string;
+    completionDate: string;
+  }): Promise<boolean> {
+    try {
+      const template = this.getJobCompletionEmailTemplate(jobData);
+
+      const emailData: EmailData = {
+        to: jobData.customerEmail,
+        subject: template.subject,
+        htmlBody: template.htmlBody,
+        textBody: template.textBody,
+        from: `${this.FROM_NAME} <${this.FROM_EMAIL}>`
+      };
+
+      console.log('📧 JOB COMPLETION EMAIL SENT:', emailData);
+      this.storeEmailForDemo(emailData);
+
+      this.showEmailNotification(
+        `Completion confirmation sent to ${jobData.customerName}`,
+        jobData.customerEmail
+      );
+
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to send job completion email:', error);
+      return false;
+    }
+  }
+
+  private static getJobCompletionEmailTemplate(jobData: {
+    customerName: string;
+    customerEmail: string;
+    jobTitle: string;
+    jobId: string;
+    completionDate: string;
+  }): EmailTemplate {
+    const subject = `Job Completed: ${jobData.jobTitle} - JobManager Pro`;
+
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f8fafc; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 32px 24px; text-align: center; }
+    .content { padding: 32px 24px; }
+    .completion-box { background: #f0fdf4; border-radius: 8px; padding: 24px; margin: 24px 0; border-left: 4px solid #10b981; }
+    .footer { background: #f8fafc; padding: 24px; text-align: center; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✅ Job Completed</h1>
+      <p>Your project has been successfully completed</p>
+    </div>
+
+    <div class="content">
+      <h2>Dear ${jobData.customerName},</h2>
+      <p>We're pleased to inform you that your job has been completed successfully!</p>
+
+      <div class="completion-box">
+        <h3>📋 Job Information</h3>
+        <p><strong>Job Title:</strong> ${jobData.jobTitle}</p>
+        <p><strong>Job ID:</strong> ${jobData.jobId}</p>
+        <p><strong>Completion Date:</strong> ${new Date(jobData.completionDate).toLocaleDateString()}</p>
+      </div>
+
+      <p>Thank you for choosing JobManager Pro. We hope you're satisfied with our service!</p>
+
+      <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+
+      <p>Best regards,<br>
+      <strong>The JobManager Pro Team</strong></p>
+    </div>
+
+    <div class="footer">
+      <p>© 2025 JobManager Pro. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const textBody = `
+Job Completed - JobManager Pro
+
+Dear ${jobData.customerName},
+
+We're pleased to inform you that your job has been completed successfully!
+
+JOB INFORMATION:
+Job Title: ${jobData.jobTitle}
+Job ID: ${jobData.jobId}
+Completion Date: ${new Date(jobData.completionDate).toLocaleDateString()}
+
+Thank you for choosing JobManager Pro. We hope you're satisfied with our service!
+
+If you have any questions or concerns, please don't hesitate to contact us.
+
+Best regards,
+The JobManager Pro Team
+
+© 2025 JobManager Pro. All rights reserved.
+`;
+
+    return { subject, htmlBody, textBody };
+  }
 }
