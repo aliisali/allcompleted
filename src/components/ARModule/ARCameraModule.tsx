@@ -32,38 +32,45 @@ export default function ARCameraModule() {
   const startCamera = async () => {
     try {
       setPermissionError(null);
-      console.log('📹 Starting AR camera...');
+      console.log('📹 Requesting camera permission...');
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setPermissionError('Camera is not supported on this device or browser.');
         return;
       }
 
-      console.log('📹 Requesting camera access...');
       const constraints = {
         video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1920, max: 1920 },
-          height: { ideal: 1080, max: 1080 }
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
         },
         audio: false
       };
 
+      console.log('📹 Requesting camera with facingMode:', constraints.video.facingMode);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      console.log('✅ Camera stream obtained');
+      console.log('✅ Camera stream obtained:', stream.getVideoTracks().length, 'video tracks');
       streamRef.current = stream;
 
-      if (videoRef.current) {
+      setShowCamera(true);
+
+      setTimeout(() => {
+        if (!videoRef.current) {
+          console.log('❌ Video element not found');
+          setPermissionError('Failed to initialize video element. Please try again.');
+          stopCamera();
+          return;
+        }
+
+        console.log('✅ Video element found, attaching stream');
         videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute('playsinline', 'true');
-        videoRef.current.setAttribute('webkit-playsinline', 'true');
 
         videoRef.current.onloadedmetadata = () => {
           console.log('✅ Video metadata loaded');
           videoRef.current?.play().then(() => {
-            console.log('✅ Video playing');
-            setShowCamera(true);
+            console.log('✅ Video playing successfully');
             setPermissionError(null);
             setTimeout(() => {
               requestAnimationFrame(renderFrame);
@@ -73,7 +80,13 @@ export default function ARCameraModule() {
             setPermissionError('Failed to start video playback. Please try again.');
           });
         };
-      }
+
+        videoRef.current.onerror = (err) => {
+          console.error('❌ Video error:', err);
+          setPermissionError('Video element error. Please try again.');
+        };
+      }, 100);
+
     } catch (error: any) {
       console.error('❌ Camera error:', error);
 
@@ -233,14 +246,22 @@ export default function ARCameraModule() {
           autoPlay
           playsInline
           muted
-          webkit-playsinline="true"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectFit: 'cover' }}
+          className="absolute inset-0 w-full h-full"
+          style={{
+            objectFit: 'cover',
+            width: '100%',
+            height: '100%',
+            zIndex: 1
+          }}
         />
 
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{
+            objectFit: 'cover',
+            zIndex: 2
+          }}
         />
 
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
