@@ -145,7 +145,7 @@ export function MainApp() {
       </div>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 transition-all duration-300 w-full">
+        <main className="flex-1 overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 transition-all duration-300 w-full">
           {/* Mobile Header */}
           <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
             <button
