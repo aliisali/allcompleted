@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Plus, Search, Filter, Calendar, MapPin, User, DollarSign, Camera, FileText, CheckCircle, Clock, XCircle, X, Trash2, ClipboardList, CreditCard as Edit, Play, Eye, Settings } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -35,8 +35,9 @@ export function JobManagement() {
     quotation: ''
   });
 
-  // Filter jobs based on user role and permissions
-  const getVisibleJobs = () => {
+  // Filter jobs based on user role and permissions - memoized for performance
+  const visibleJobs = useMemo(() => {
+    console.log('🔄 Recalculating visible jobs...');
     console.log('🔍 JobManagement - Current user:', {
       name: currentUser?.name,
       email: currentUser?.email,
@@ -51,12 +52,6 @@ export function JobManagement() {
       return jobs; // Admin can see all jobs
     } else if (currentUser?.role === 'business') {
       console.log('🏢 Business user - filtering by businessId:', currentUser.businessId);
-
-      // Log each job to see what's happening
-      jobs.forEach(job => {
-        const match = job.businessId === currentUser.businessId;
-        console.log(`  📋 Job "${job.title}" (${job.id}): businessId="${job.businessId}" (type: ${typeof job.businessId}) vs user businessId="${currentUser.businessId}" (type: ${typeof currentUser.businessId}) => ${match ? '✅ MATCH' : '❌ NO MATCH'}`);
-      });
 
       const filtered = jobs.filter(job => job.businessId === currentUser.businessId);
       console.log('✅ Business filtered jobs count:', filtered.length);
@@ -73,9 +68,7 @@ export function JobManagement() {
       return filtered; // Employee can only see jobs assigned to them
     }
     return [];
-  };
-
-  const visibleJobs = getVisibleJobs();
+  }, [jobs, currentUser]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -462,9 +455,12 @@ export function JobManagement() {
             updateJob(selectedJob.id, updates);
             setSelectedJob({ ...selectedJob, ...updates });
           }}
-          onClose={() => {
+          onClose={async () => {
             setShowWorkflow(false);
             setSelectedJob(null);
+            // Refresh data to show updated job status
+            console.log('🔄 Workflow closed, refreshing job list...');
+            await refreshData();
           }}
         />
       )}
@@ -614,10 +610,10 @@ export function JobManagement() {
               </button>
             </div>
 
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
-              updateJob(selectedJob.id, {
+              await updateJob(selectedJob.id, {
                 title: formData.get('title') as string,
                 description: formData.get('description') as string,
                 scheduledDate: formData.get('scheduledDate') as string,
@@ -628,6 +624,8 @@ export function JobManagement() {
               setEditingJob(null);
               setSelectedJob(null);
               setEditingMeasurements([]);
+              // Refresh to show updated job
+              await refreshData();
             }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
