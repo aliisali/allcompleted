@@ -34,6 +34,7 @@ interface DataContextType {
   notifications: Notification[];
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => Promise<void>;
   markNotificationRead: (id: string) => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
   
   // Products
   products: Product[];
@@ -605,12 +606,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // } else {
         LocalStorageService.markNotificationRead(id);
       // }
-      
-      setNotifications(prev => prev.map(notification => 
+
+      setNotifications(prev => prev.map(notification =>
         notification.id === id ? { ...notification, read: true } : notification
       ));
     } catch (error) {
       console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    try {
+      // Remove from local storage
+      const stored = localStorage.getItem('notifications');
+      if (stored) {
+        const notifications = JSON.parse(stored);
+        const filtered = notifications.filter((n: Notification) => n.id !== id);
+        localStorage.setItem('notifications', JSON.stringify(filtered));
+      }
+
+      // Update state
+      setNotifications(prev => prev.filter(notification => notification.id !== id));
+    } catch (error) {
+      console.error('Error deleting notification:', error);
     }
   };
 
@@ -676,6 +694,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       notifications,
       addNotification,
       markNotificationRead,
+      deleteNotification,
       products,
       addProduct,
       updateProduct,

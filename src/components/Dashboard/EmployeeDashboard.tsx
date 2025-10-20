@@ -13,11 +13,10 @@ import {
 } from 'lucide-react';
 
 export function EmployeeDashboard() {
-  const { jobs, notifications, customers, refreshData } = useData();
+  const { jobs, notifications, customers, refreshData, markNotificationRead, deleteNotification } = useData();
   const { user: currentUser } = useAuth();
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [expandedNotifications, setExpandedNotifications] = useState(false);
 
   // Auto-refresh jobs every 30 seconds to check for new assignments
@@ -81,11 +80,6 @@ export function EmployeeDashboard() {
 
   // Get notifications
   const displayNotifications = expandedNotifications ? notifications : notifications.slice(0, 3);
-  const notificationsList = displayNotifications.map(notification => ({
-    message: notification.message,
-    time: new Date(notification.createdAt).toLocaleString(),
-    type: notification.type
-  }));
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -205,26 +199,60 @@ export function EmployeeDashboard() {
               </span>
             </h2>
             <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="text-blue-600 hover:text-blue-700 transition-colors"
+              onClick={() => setExpandedNotifications(!expandedNotifications)}
+              className="text-blue-600 hover:text-blue-700 transition-colors relative"
+              title="Toggle notifications"
             >
               <Bell className="w-5 h-5" />
+              {notifications.filter(n => !n.read).length > 0 && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
+              )}
             </button>
           </div>
-          <div className={`space-y-4 ${expandedNotifications ? 'max-h-[500px] overflow-y-auto' : ''}`}>
-            {notificationsList.length > 0 ? (
-              notificationsList.map((notification, index) => (
-                <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                    notification.type === 'job' ? 'bg-blue-500' :
-                    notification.type === 'reminder' ? 'bg-yellow-500' : 'bg-green-500'
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{notification.message}</p>
-                    <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+          <div className={`space-y-3 transition-all duration-300 ${
+            expandedNotifications ? 'max-h-[500px] overflow-y-auto' : 'max-h-[300px]'
+          }`}>
+            {displayNotifications.length > 0 ? (
+              displayNotifications.map((notification) => {
+                return (
+                  <div
+                    key={notification.id}
+                    className={`flex items-start space-x-3 p-3 rounded-lg transition-colors cursor-pointer group relative ${
+                      !notification.read ? 'bg-blue-50 hover:bg-blue-100' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                    onClick={() => {
+                      if (!notification.read) {
+                        markNotificationRead(notification.id);
+                      }
+                    }}
+                  >
+                    <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                      notification.type === 'job' ? 'bg-blue-500' :
+                      notification.type === 'reminder' ? 'bg-yellow-500' : 'bg-green-500'
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(notification.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(notification.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 flex-shrink-0"
+                      title="Dismiss"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">No notifications</p>
             )}
