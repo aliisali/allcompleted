@@ -175,7 +175,7 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
                 setDetailProduct(product);
                 setShowProductDetail(true);
               }}
-              className="cursor-pointer"
+              className="cursor-pointer mb-3"
             >
               <img
                 src={product.image}
@@ -187,10 +187,13 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
               <p className="text-lg font-bold text-blue-600 mb-3">${product.price}</p>
             </div>
 
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 mt-3">
               <button
-                onClick={() => handleProductSelect(product)}
-                className={`flex-1 px-3 py-2 rounded-lg transition-all text-sm font-medium ${
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleProductSelect(product);
+                }}
+                className={`flex-1 px-3 py-2 rounded-lg transition-all text-sm font-medium cursor-pointer ${
                   selectedProducts.some(p => p.productId === product.id)
                     ? 'bg-green-600 text-white shadow-lg transform scale-105'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -200,8 +203,11 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
                 {selectedProducts.some(p => p.productId === product.id) ? 'Selected' : 'Select'}
               </button>
               <button
-                onClick={() => handleARDemo(product)}
-                className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleARDemo(product);
+                }}
+                className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
               >
                 <Camera className="w-4 h-4" />
               </button>
@@ -463,7 +469,7 @@ export function ProductSelection({ job, onComplete, onBack }: ProductSelectionPr
         <button
           onClick={handleComplete}
           disabled={selectedProducts.length === 0}
-          className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${!onBack ? 'ml-auto' : ''}`}
+          className={`px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer font-medium ${!onBack ? 'ml-auto' : ''}`}
         >
           Continue to Next Step
           <ArrowRight className="w-4 h-4 ml-2 inline" />

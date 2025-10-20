@@ -333,14 +333,14 @@ export function JobManagement() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center flex-wrap gap-2 mt-4">
                   {(job.status === 'pending' || job.status === 'confirmed' || job.status === 'in-progress' || job.status === 'tbd') && (
                     <button
                       onClick={() => {
                         setSelectedJob(job);
                         setShowWorkflow(true);
                       }}
-                      className="flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
+                      className="flex items-center px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors cursor-pointer font-medium"
                     >
                       <Play className="w-4 h-4 mr-1" />
                       {job.status === 'in-progress' ? 'Continue' : 'Start Job'}
@@ -351,17 +351,17 @@ export function JobManagement() {
                       setSelectedJob(job);
                       setShowDetailsModal(true);
                     }}
-                    className="flex items-center px-3 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                    className="flex items-center px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
                   >
                     <FileText className="w-4 h-4 mr-1" />
                     Details
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       setSelectedJob(job);
                       setShowJobDetails(true);
                     }}
-                    className="flex items-center px-3 py-1 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+                    className="flex items-center px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer"
                   >
                     <Eye className="w-4 h-4 mr-1" />
                     History
@@ -375,7 +375,7 @@ export function JobManagement() {
                           setEditingMeasurements(job.measurements || []);
                           setShowEditModal(true);
                         }}
-                        className="flex items-center px-3 py-1 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="flex items-center px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                       >
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
@@ -385,7 +385,7 @@ export function JobManagement() {
                           setSelectedJob(job);
                           setShowAssignModal(true);
                         }}
-                        className="flex items-center px-3 py-1 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors"
+                        className="flex items-center px-3 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors cursor-pointer"
                       >
                         <Settings className="w-4 h-4 mr-1" />
                         Assign
@@ -397,7 +397,7 @@ export function JobManagement() {
                       setSelectedJob(job);
                       setShowPhotosModal(true);
                     }}
-                    className="flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
+                    className="flex items-center px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors cursor-pointer"
                   >
                     <Camera className="w-4 h-4 mr-1" />
                     Photos ({job.images.length})
@@ -407,7 +407,7 @@ export function JobManagement() {
                       setSelectedJob(job);
                       setShowLocationModal(true);
                     }}
-                    className="flex items-center px-3 py-1 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+                    className="flex items-center px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer"
                   >
                     <MapPin className="w-4 h-4 mr-1" />
                     Location
@@ -415,7 +415,7 @@ export function JobManagement() {
                   {canDeleteJob(job) && (
                     <button 
                       onClick={() => deleteJob(job.id)}
-                      className="flex items-center px-3 py-1 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
+                      className="flex items-center px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
                       Delete
