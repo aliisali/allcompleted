@@ -197,11 +197,48 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addUser = async (userData: Omit<User, 'id' | 'createdAt'>) => {
     try {
       let newUser: User;
+      let businessId = userData.businessId;
+
+      // Auto-create business for business role users if no businessId provided
+      if (userData.role === 'business' && !businessId) {
+        const newBusiness: Omit<Business, 'id' | 'createdAt'> = {
+          name: `${userData.name}'s Business`,
+          address: '',
+          phone: '',
+          email: userData.email,
+          adminId: '', // Will be updated after user creation
+          features: ['job_management', 'calendar', 'reports'],
+          subscription: 'basic',
+          vrViewEnabled: false
+        };
+
+        if (DatabaseService.isAvailable()) {
+          const createdBusiness = await DatabaseService.createBusiness(newBusiness);
+          businessId = createdBusiness.id;
+          setBusinesses(prev => [...prev, createdBusiness]);
+        } else {
+          await saveToMultipleSources('create', 'business', newBusiness);
+          const businesses = LocalStorageService.getBusinesses();
+          businessId = businesses[businesses.length - 1].id;
+          setBusinesses(businesses);
+        }
+      }
+
+      // Create user with business_id
+      const userDataWithBusiness = { ...userData, businessId };
 
       if (DatabaseService.isAvailable()) {
-        newUser = await DatabaseService.createUser(userData);
+        newUser = await DatabaseService.createUser(userDataWithBusiness);
+
+        // Update business admin_id if this is a business user and we just created their business
+        if (userData.role === 'business' && businessId && !userData.businessId) {
+          await DatabaseService.updateBusiness(businessId, { adminId: newUser.id });
+          setBusinesses(prev => prev.map(b =>
+            b.id === businessId ? { ...b, adminId: newUser.id } : b
+          ));
+        }
       } else {
-        await saveToMultipleSources('create', 'user', userData);
+        await saveToMultipleSources('create', 'user', userDataWithBusiness);
         const users = LocalStorageService.getUsers();
         newUser = users[users.length - 1];
       }

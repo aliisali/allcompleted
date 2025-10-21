@@ -101,6 +101,17 @@ export function UserManagement() {
     }
 
     try {
+      // Determine businessId based on role and current user
+      let businessId: string | undefined;
+
+      if (newUser.role === 'employee') {
+        // Employees inherit business_id from their creator (business user)
+        businessId = currentUser?.businessId || undefined;
+      } else if (newUser.role === 'business') {
+        // Business users: use selected businessId or auto-create in addUser
+        businessId = newUser.businessId || undefined;
+      }
+
       const userData = {
         name: newUser.name.trim(),
         email: newUser.email.trim().toLowerCase(),
@@ -109,7 +120,7 @@ export function UserManagement() {
         permissions: newUser.role === 'employee' && currentUser?.businessId
           ? ['create_jobs', 'manage_tasks', 'capture_signatures', 'view_dashboard', 'view_calendar']
           : getDefaultPermissions(newUser.role),
-        businessId: newUser.role === 'employee' ? (currentUser?.businessId || undefined) : (newUser.businessId || undefined),
+        businessId,
         isActive: true,
         emailVerified: false
       };
