@@ -58,29 +58,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Initialize data on mount
   useEffect(() => {
-    console.log('🚀 DataProvider: Initializing...');
-    
-    // Force refresh data to handle domain changes
     LocalStorageService.forceRefresh();
-    
     loadData();
   }, []);
 
   const loadData = async () => {
     try {
-      console.log('📊 Loading data from Supabase...');
       setLoading(true);
 
       if (DatabaseService.isAvailable()) {
         const [usersData, businessesData, jobsData, customersData, productsData, notificationsData] = await Promise.all([
-          DatabaseService.getUsers().catch(err => { console.error('Error loading users:', err); return []; }),
-          DatabaseService.getBusinesses().catch(err => { console.error('Error loading businesses:', err); return []; }),
-          DatabaseService.getJobs().catch(err => { console.error('Error loading jobs:', err); return []; }),
-          DatabaseService.getCustomers().catch(err => { console.error('Error loading customers:', err); return []; }),
-          DatabaseService.getProducts().catch(err => { console.error('Error loading products:', err); return []; }),
-          DatabaseService.getNotifications().catch(err => { console.error('Error loading notifications:', err); return []; })
+          DatabaseService.getUsers().catch(() => []),
+          DatabaseService.getBusinesses().catch(() => []),
+          DatabaseService.getJobs().catch(() => []),
+          DatabaseService.getCustomers().catch(() => []),
+          DatabaseService.getProducts().catch(() => []),
+          DatabaseService.getNotifications().catch(() => [])
         ]);
 
         setUsers(usersData);
@@ -89,51 +83,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setCustomers(customersData);
         setProducts(productsData);
         setNotifications(notificationsData);
-
-        console.log('✅ Supabase data loaded:', {
-          users: usersData.length,
-          businesses: businessesData.length,
-          jobs: jobsData.length,
-          customers: customersData.length,
-          products: productsData.length,
-          notifications: notificationsData.length
-        });
-
-        // Show warning if any data is empty
-        if (jobsData.length === 0) console.warn('⚠️ No jobs found in database');
-        if (productsData.length === 0) console.warn('⚠️ No products found in database');
       } else {
-        console.log('📝 Supabase not available, using localStorage...');
         LocalStorageService.initializeData();
-
-        const localUsers = LocalStorageService.getUsers();
-        const localBusinesses = LocalStorageService.getBusinesses();
-        const localJobs = LocalStorageService.getJobs();
-        const localCustomers = LocalStorageService.getCustomers();
-        const localProducts = LocalStorageService.getProducts();
-        const localNotifications = LocalStorageService.getNotifications();
-
-        setUsers(localUsers);
-        setBusinesses(localBusinesses);
-        setJobs(localJobs);
-        setCustomers(localCustomers);
-        setProducts(localProducts);
-        setNotifications(localNotifications);
-
-        console.log('✅ LocalStorage data loaded:', {
-          users: localUsers.length,
-          businesses: localBusinesses.length,
-          jobs: localJobs.length,
-          customers: localCustomers.length,
-          products: localProducts.length
-        });
+        setUsers(LocalStorageService.getUsers());
+        setBusinesses(LocalStorageService.getBusinesses());
+        setJobs(LocalStorageService.getJobs());
+        setCustomers(LocalStorageService.getCustomers());
+        setProducts(LocalStorageService.getProducts());
+        setNotifications(LocalStorageService.getNotifications());
       }
-
     } catch (error: any) {
-      console.error('❌ Error loading data:', error);
       showErrorMessage(`Failed to load data: ${error?.message || 'Unknown error'}`);
-
-      console.log('📝 Falling back to localStorage...');
       try {
         LocalStorageService.initializeData();
         setUsers(LocalStorageService.getUsers());
@@ -143,7 +103,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setProducts(LocalStorageService.getProducts());
         setNotifications(LocalStorageService.getNotifications());
       } catch (fallbackError) {
-        console.error('❌ Even localStorage failed:', fallbackError);
         showErrorMessage('Critical error: Unable to load any data');
       }
     } finally {
@@ -231,22 +190,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshData = async () => {
-    console.log('🔄 Refreshing data...');
     await loadData();
   };
 
   // User management
   const addUser = async (userData: Omit<User, 'id' | 'createdAt'>) => {
     try {
-      console.log('👤 Creating user:', userData.name);
-
       let newUser: User;
 
       if (DatabaseService.isAvailable()) {
-        console.log('✅ Using Supabase to create user');
         newUser = await DatabaseService.createUser(userData);
       } else {
-        console.log('📝 Using localStorage to create user');
         await saveToMultipleSources('create', 'user', userData);
         const users = LocalStorageService.getUsers();
         newUser = users[users.length - 1];
@@ -254,7 +208,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       setUsers(prev => [...prev, newUser]);
 
-      // Send welcome email with credentials
       try {
         const businessName = newUser.businessId
           ? businesses.find(b => b.id === newUser.businessId)?.name
@@ -267,16 +220,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
           role: newUser.role,
           businessName
         });
-
-        console.log('✅ Welcome email sent to:', newUser.email);
       } catch (emailError) {
-        console.error('⚠️ Failed to send welcome email:', emailError);
+        // Silent fail for email
       }
 
       showSuccessMessage(`User "${userData.name}" created successfully!`);
       return newUser;
     } catch (error) {
-      console.error('❌ Failed to create user:', error);
       showErrorMessage('Failed to create user. Please try again.');
       throw error;
     }
@@ -334,33 +284,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteUser = async (id: string) => {
     try {
-      console.log('🗑️ Deleting user:', id);
-      
-      let success = false;
-      
-      // Try Supabase first
-      // TODO: Implement Supabase integration
-      // if (DatabaseService.isAvailable() && DatabaseService.hasValidCredentials()) {
-      //   try {
-      //     await DatabaseService.deleteUser(id);
-      //     console.log('✅ User deleted via Supabase');
-      //     success = true;
-      //   } catch (supabaseError) {
-      //     console.log('⚠️ Supabase delete failed, using localStorage:', supabaseError);
-      //   }
-      // }
-      
-      // Fallback to localStorage
-      if (!success) {
+      if (DatabaseService.isAvailable()) {
+        await DatabaseService.deleteUser(id);
+      } else {
         LocalStorageService.deleteUser(id);
-        console.log('✅ User deleted via localStorage');
       }
-      
+
       setUsers(prev => prev.filter(user => user.id !== id));
       showSuccessMessage('User deleted successfully!');
     } catch (error) {
-      console.error('Error deleting user:', error);
       showErrorMessage('Failed to delete user.');
+      throw error;
     }
   };
 
@@ -370,10 +304,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       let newBusiness: Business;
 
       if (DatabaseService.isAvailable()) {
-        console.log('✅ Using Supabase to create business');
         newBusiness = await DatabaseService.createBusiness(businessData);
       } else {
-        console.log('📝 Using localStorage to create business');
         await saveToMultipleSources('create', 'business', businessData);
         const businesses = LocalStorageService.getBusinesses();
         newBusiness = businesses[businesses.length - 1];
@@ -382,8 +314,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setBusinesses(prev => [...prev, newBusiness]);
       showSuccessMessage('Business created successfully!');
     } catch (error) {
-      console.error('Error creating business:', error);
       showErrorMessage('Failed to create business.');
+      throw error;
     }
   };
 
@@ -400,8 +332,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       ));
       showSuccessMessage('Business updated successfully!');
     } catch (error) {
-      console.error('Error updating business:', error);
       showErrorMessage('Failed to update business.');
+      throw error;
     }
   };
 
@@ -416,41 +348,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setBusinesses(prev => prev.filter(business => business.id !== id));
       showSuccessMessage('Business deleted successfully!');
     } catch (error) {
-      console.error('Error deleting business:', error);
       showErrorMessage('Failed to delete business.');
+      throw error;
     }
   };
 
-  // Job management
   const addJob = async (jobData: Omit<Job, 'id' | 'createdAt'>) => {
     try {
-      console.log('📋 DataContext: Creating job with data:', {
-        title: jobData.title,
-        businessId: jobData.businessId,
-        employeeId: jobData.employeeId,
-        customerId: jobData.customerId,
-        jobType: jobData.jobType
-      });
-
       let newJob: Job;
 
       if (DatabaseService.isAvailable()) {
-        console.log('✅ Using Supabase to create job');
         newJob = await DatabaseService.createJob(jobData);
-        console.log('✅ Job created in Supabase with ID:', newJob.id, 'businessId:', newJob.businessId);
       } else {
-        console.log('📝 Using localStorage to create job');
         await saveToMultipleSources('create', 'job', jobData);
         const jobs = LocalStorageService.getJobs();
         newJob = jobs[jobs.length - 1];
-        console.log('✅ Job created in localStorage with ID:', newJob.id, 'businessId:', newJob.businessId);
       }
 
       setJobs(prev => [...prev, newJob]);
-
       showSuccessMessage('Job created successfully!');
     } catch (error: any) {
-      console.error('Error creating job:', error);
       const errorMessage = error?.message || 'Failed to create job.';
       showErrorMessage(errorMessage);
       throw error;
@@ -459,29 +376,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateJob = async (id: string, jobData: Partial<Job>) => {
     try {
-      console.log('🔄 Updating job:', id, 'with data:', jobData);
-
       if (DatabaseService.isAvailable()) {
         await DatabaseService.updateJob(id, jobData);
-        console.log('✅ Job updated in database');
       } else {
         await saveToMultipleSources('update', 'job', jobData, id);
       }
 
-      // Update local state immediately for responsive UI
       setJobs(prev => prev.map(job =>
         job.id === id ? { ...job, ...jobData } : job
       ));
 
-      // If status changed to completed, refresh to ensure data consistency
       if (jobData.status === 'completed' || jobData.status === 'in-progress') {
-        console.log('🔄 Refreshing job data after status change...');
         setTimeout(() => refreshData(), 500);
       }
 
       showSuccessMessage('Job updated successfully!');
     } catch (error: any) {
-      console.error('❌ Error updating job:', error);
       const errorMessage = error?.message || 'Failed to update job.';
       showErrorMessage(errorMessage);
       throw error;
@@ -499,32 +409,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setJobs(prev => prev.filter(job => job.id !== id));
       showSuccessMessage('Job deleted successfully!');
     } catch (error) {
-      console.error('Error deleting job:', error);
       showErrorMessage('Failed to delete job.');
+      throw error;
     }
   };
 
-  // Customer management
   const addCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt'>) => {
     try {
       let newCustomer: Customer;
 
       if (DatabaseService.isAvailable()) {
-        console.log('✅ Using Supabase to create customer');
         newCustomer = await DatabaseService.createCustomer(customerData);
       } else {
-        console.log('📝 Using localStorage to create customer');
         await saveToMultipleSources('create', 'customer', customerData);
         const customers = LocalStorageService.getCustomers();
         newCustomer = customers[customers.length - 1];
       }
 
       setCustomers(prev => [...prev, newCustomer]);
-
       showSuccessMessage('Customer added successfully!');
       return newCustomer;
     } catch (error: any) {
-      console.error('Error creating customer:', error);
       const errorMessage = error?.message || 'Failed to create customer.';
       showErrorMessage(errorMessage);
       throw error;
@@ -545,8 +450,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       showSuccessMessage('Customer updated successfully!');
     } catch (error) {
-      console.error('Error updating customer:', error);
       showErrorMessage('Failed to update customer.');
+      throw error;
     }
   };
 
@@ -561,21 +466,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setCustomers(prev => prev.filter(customer => customer.id !== id));
       showSuccessMessage('Customer deleted successfully!');
     } catch (error) {
-      console.error('Error deleting customer:', error);
       showErrorMessage('Failed to delete customer.');
+      throw error;
     }
   };
 
-  // Product management
   const addProduct = async (productData: Omit<Product, 'id' | 'createdAt'>) => {
     try {
       let newProduct: Product;
 
       if (DatabaseService.isAvailable()) {
-        console.log('✅ Using Supabase to create product');
         newProduct = await DatabaseService.createProduct(productData);
       } else {
-        console.log('📝 Using localStorage to create product');
         await saveToMultipleSources('create', 'product', productData);
         const products = LocalStorageService.getProducts();
         newProduct = products[products.length - 1];
@@ -584,8 +486,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setProducts(prev => [...prev, newProduct]);
       showSuccessMessage('Product added successfully!');
     } catch (error) {
-      console.error('Error adding product:', error);
       showErrorMessage('Failed to add product.');
+      throw error;
     }
   };
 
@@ -602,8 +504,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       ));
       showSuccessMessage('Product updated successfully!');
     } catch (error) {
-      console.error('Error updating product:', error);
       showErrorMessage('Failed to update product.');
+      throw error;
     }
   };
 
@@ -618,57 +520,42 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setProducts(prev => prev.filter(product => product.id !== id));
       showSuccessMessage('Product deleted successfully!');
     } catch (error) {
-      console.error('Error deleting product:', error);
       showErrorMessage('Failed to delete product.');
+      throw error;
     }
   };
 
-  // Notification management
   const addNotification = async (notificationData: Omit<Notification, 'id' | 'createdAt'>) => {
     try {
       const newNotification = LocalStorageService.createNotification(notificationData);
       setNotifications(prev => [...prev, newNotification]);
     } catch (error) {
-      console.error('Error creating notification:', error);
+      // Silent fail
     }
   };
 
   const markNotificationRead = async (id: string) => {
     try {
-      // Try database first, then localStorage
-      // TODO: Implement Supabase integration
-      // if (DatabaseService.isAvailable()) {
-      //   try {
-      //     await DatabaseService.markNotificationRead(id);
-      //   } catch (error) {
-      //     LocalStorageService.markNotificationRead(id);
-      //   }
-      // } else {
-        LocalStorageService.markNotificationRead(id);
-      // }
-
+      LocalStorageService.markNotificationRead(id);
       setNotifications(prev => prev.map(notification =>
         notification.id === id ? { ...notification, read: true } : notification
       ));
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      // Silent fail
     }
   };
 
   const deleteNotification = async (id: string) => {
     try {
-      // Remove from local storage
       const stored = localStorage.getItem('notifications');
       if (stored) {
         const notifications = JSON.parse(stored);
         const filtered = notifications.filter((n: Notification) => n.id !== id);
         localStorage.setItem('notifications', JSON.stringify(filtered));
       }
-
-      // Update state
       setNotifications(prev => prev.filter(notification => notification.id !== id));
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      // Silent fail
     }
   };
 

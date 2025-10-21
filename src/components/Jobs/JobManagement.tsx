@@ -9,7 +9,7 @@ import { JobDetailsModal } from './JobDetailsModal';
 import { LoadingSpinner } from '../Layout/LoadingSpinner';
 
 export function JobManagement() {
-  const { addJob, deleteJob, updateJob, refreshData, loading } = useData();
+  const { addJob, addCustomer, deleteJob, updateJob, refreshData, loading } = useData();
   const { user: currentUser } = useAuth();
   // Use role-based filtering for proper data isolation
   const { jobs: roleFilteredJobs, users, customers } = useRoleBasedData();
@@ -82,61 +82,73 @@ export function JobManagement() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreateJob = (e: React.FormEvent) => {
+  const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // First create or find customer
-    const customerId = `customer-${Date.now()}`;
-    // Use current user's businessId or default business
-    const businessId = currentUser?.businessId || '00000000-0000-0000-0000-000000000001';
 
-    const customerData = {
-      name: newJob.customerName,
-      email: newJob.customerEmail,
-      phone: newJob.customerPhone,
-      mobile: newJob.customerMobile,
-      address: newJob.customerAddress,
-      postcode: newJob.customerPostcode,
-      businessId: businessId
-    };
-    
-    // Add customer to context (you'd need to import addCustomer from useData)
-    
-    const jobData = {
-      ...newJob,
-      customerId: customerId,
-      jobType: 'installation' as const,
-      status: 'pending' as const,
-      employeeId: currentUser?.id || null,
-      businessId: businessId,
-      scheduledTime: '09:00',
-      quotation: parseFloat(newJob.quotation) || 0,
-      images: [],
-      documents: [],
-      checklist: [
-        { id: '1', text: 'Initial assessment', completed: false },
-        { id: '2', text: 'Prepare materials', completed: false },
-        { id: '3', text: 'Complete work', completed: false },
-        { id: '4', text: 'Final inspection', completed: false },
-      ],
-      jobHistory: []
-    };
-    
-    addJob(jobData);
-    
-    setShowCreateModal(false);
-    setNewJob({
-      title: '',
-      description: '',
-      customerName: '',
-      customerEmail: '',
-      customerPhone: '',
-      customerMobile: '',
-      customerAddress: '',
-      customerPostcode: '',
-      scheduledDate: '',
-      quotation: ''
-    });
+    if (!newJob.title || !newJob.customerName || !newJob.scheduledDate) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    if (!currentUser?.businessId) {
+      alert('Business ID is required. Please contact your administrator.');
+      return;
+    }
+
+    try {
+      const customerData = {
+        name: newJob.customerName,
+        email: newJob.customerEmail || '',
+        phone: newJob.customerPhone || '',
+        mobile: newJob.customerMobile || '',
+        address: newJob.customerAddress || '',
+        postcode: newJob.customerPostcode || '',
+        businessId: currentUser.businessId
+      };
+
+      const customer = await addCustomer(customerData);
+      if (!customer) {
+        throw new Error('Failed to create customer');
+      }
+
+      const jobData = {
+        ...newJob,
+        customerId: customer.id,
+        jobType: 'installation' as const,
+        status: 'pending' as const,
+        employeeId: currentUser.id,
+        businessId: currentUser.businessId,
+        scheduledTime: '09:00',
+        quotation: parseFloat(newJob.quotation) || 0,
+        images: [],
+        documents: [],
+        checklist: [
+          { id: '1', text: 'Initial assessment', completed: false },
+          { id: '2', text: 'Prepare materials', completed: false },
+          { id: '3', text: 'Complete work', completed: false },
+          { id: '4', text: 'Final inspection', completed: false },
+        ],
+        jobHistory: []
+      };
+
+      await addJob(jobData);
+
+      setShowCreateModal(false);
+      setNewJob({
+        title: '',
+        description: '',
+        customerName: '',
+        customerEmail: '',
+        customerPhone: '',
+        customerMobile: '',
+        customerAddress: '',
+        customerPostcode: '',
+        scheduledDate: '',
+        quotation: ''
+      });
+    } catch (error) {
+      alert('Failed to create job. Please try again.');
+    }
   };
 
   const handleEditJob = (job: any) => {

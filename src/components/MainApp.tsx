@@ -121,7 +121,7 @@ export function MainApp() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <SubscriptionBanner onNavigateToSubscription={() => setActiveTab('subscription')} />
 
       <div className="flex flex-1 overflow-hidden">
@@ -147,7 +147,7 @@ export function MainApp() {
       </div>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 transition-all duration-300 w-full">
+        <main className="flex-1 overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 transition-all duration-300 w-full">
           {/* Mobile Header */}
           <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
             <button
@@ -165,7 +165,7 @@ export function MainApp() {
           {/* Desktop Top Bar with Logout */}
           <div className="hidden lg:flex sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-3 items-center justify-between shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
                 {user?.name.charAt(0).toUpperCase()}
               </div>
               <div>

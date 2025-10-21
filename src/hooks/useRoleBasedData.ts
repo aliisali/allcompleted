@@ -11,33 +11,22 @@ export function useRoleBasedData() {
   const { user: currentUser } = useAuth();
   const { jobs, users, customers, notifications } = useData();
 
-  // Filter jobs based on user role
   const filteredJobs = useMemo(() => {
     if (!currentUser) return [];
 
-    console.log('🔒 Role-based filter - User:', currentUser.role, 'BusinessId:', currentUser.businessId);
-
-    // SuperAdmin sees everything
     if (currentUser.role === 'admin') {
-      console.log('✅ Admin: Showing all', jobs.length, 'jobs');
       return jobs;
     }
 
-    // Business sees only their business jobs
     if (currentUser.role === 'business') {
-      const filtered = jobs.filter(job => job.businessId === currentUser.businessId);
-      console.log('✅ Business: Filtered', filtered.length, 'of', jobs.length, 'jobs for businessId:', currentUser.businessId);
-      return filtered;
+      return jobs.filter(job => job.businessId === currentUser.businessId);
     }
 
-    // Employee sees only their assigned jobs
     if (currentUser.role === 'employee') {
-      const filtered = jobs.filter(job =>
+      return jobs.filter(job =>
         job.employeeId === currentUser.id &&
         job.businessId === currentUser.businessId
       );
-      console.log('✅ Employee: Filtered', filtered.length, 'of', jobs.length, 'jobs for employeeId:', currentUser.id);
-      return filtered;
     }
 
     return [];

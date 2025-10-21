@@ -11,14 +11,10 @@ const STORAGE_KEYS = {
   PRODUCTS: 'blindscloud_products_v6'
 };
 
-// Migration function to handle domain changes
 const migrateOldData = () => {
-  console.log('🔄 Checking for data migration...');
-  
-  // Check for old data with different keys
   const oldKeys = [
     'jobmanager_users_v4',
-    'jobmanager_businesses_v4', 
+    'jobmanager_businesses_v4',
     'jobmanager_jobs_v4',
     'jobmanager_customers_v4',
     'jobmanager_notifications_v4',
@@ -30,7 +26,7 @@ const migrateOldData = () => {
     'blindscloud_notifications_v5',
     'blindscloud_products_v5'
   ];
-  
+
   const newKeys = [
     STORAGE_KEYS.USERS,
     STORAGE_KEYS.BUSINESSES,
@@ -45,48 +41,19 @@ const migrateOldData = () => {
     STORAGE_KEYS.NOTIFICATIONS,
     STORAGE_KEYS.PRODUCTS
   ];
-  
-  let migrated = false;
-  
+
   oldKeys.forEach((oldKey, index) => {
     const oldData = localStorage.getItem(oldKey);
     const newKey = newKeys[index];
     const newData = localStorage.getItem(newKey);
-    
+
     if (oldData && !newData) {
-      console.log(`📦 Migrating ${oldKey} to ${newKey}`);
       localStorage.setItem(newKey, oldData);
       localStorage.removeItem(oldKey);
-      migrated = true;
     }
   });
-  
-  if (migrated) {
-    console.log('✅ Data migration completed successfully');
-    showMigrationMessage();
-  }
 };
 
-// Show migration success message
-const showMigrationMessage = () => {
-  const migrationDiv = document.createElement('div');
-  migrationDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-  migrationDiv.innerHTML = `
-    <div class="flex items-center space-x-2">
-      <div class="w-5 h-5 bg-white rounded-full flex items-center justify-center">
-        <span class="text-green-500 text-sm">✓</span>
-      </div>
-      <span>Data migrated to new domain successfully!</span>
-    </div>
-  `;
-  document.body.appendChild(migrationDiv);
-  
-  setTimeout(() => {
-    if (document.body.contains(migrationDiv)) {
-      document.body.removeChild(migrationDiv);
-    }
-  }, 5000);
-};
 
 // Default data with proper UUIDs
 const DEFAULT_USERS: User[] = [
@@ -286,22 +253,16 @@ const DEFAULT_NOTIFICATIONS: Notification[] = [
   }
 ];
 
-// Storage utilities with bulletproof error handling
 export const saveToStorage = (key: string, data: any): boolean => {
   try {
     const jsonData = JSON.stringify(data);
     localStorage.setItem(key, jsonData);
-    console.log(`✅ SAVED ${key}:`, data.length || Object.keys(data).length, 'items');
-    
-    // Verify save worked
     const verification = localStorage.getItem(key);
     if (!verification) {
       throw new Error('Save verification failed');
     }
-    
     return true;
   } catch (error) {
-    console.error(`❌ FAILED TO SAVE ${key}:`, error);
     return false;
   }
 };
@@ -310,16 +271,11 @@ export const loadFromStorage = (key: string, defaultValue: any) => {
   try {
     const stored = localStorage.getItem(key);
     if (stored && stored !== 'undefined' && stored !== 'null') {
-      const parsed = JSON.parse(stored);
-      console.log(`✅ LOADED ${key}:`, parsed.length || Object.keys(parsed).length, 'items');
-      return parsed;
+      return JSON.parse(stored);
     }
   } catch (error) {
-    console.error(`❌ FAILED TO LOAD ${key}:`, error);
+    // Silent fail
   }
-  
-  console.log(`📝 USING DEFAULT ${key}:`, defaultValue.length || Object.keys(defaultValue).length, 'items');
-  // Save defaults immediately
   saveToStorage(key, defaultValue);
   return defaultValue;
 };
@@ -554,75 +510,29 @@ export class LocalStorageService {
     return saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications);
   }
 
-  // Initialize all data
   static initializeData(): void {
-    console.log('🚀 Initializing localStorage data...');
-    
-    // First, try to migrate old data
     migrateOldData();
-    
-    // Then initialize with defaults if needed
     this.getUsers();
     this.getBusinesses();
     this.getJobs();
     this.getCustomers();
     this.getProducts();
     this.getNotifications();
-    
-    // Force save the default data
     this.saveUsers(DEFAULT_USERS);
     this.saveBusinesses(DEFAULT_BUSINESSES);
-    
-    // Show initialization message
-    const initDiv = document.createElement('div');
-    initDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    initDiv.innerHTML = `
-      <div class="flex items-center space-x-2">
-        <div class="w-5 h-5 bg-white rounded-full flex items-center justify-center">
-          <span class="text-green-500 text-sm">✓</span>
-        </div>
-        <span>BlindsCloud ready with 3 users! Ready for Render!</span>
-      </div>
-    `;
-    document.body.appendChild(initDiv);
-    
-    setTimeout(() => {
-      if (document.body.contains(initDiv)) {
-        document.body.removeChild(initDiv);
-      }
-    }, 4000);
-    
-    console.log('✅ All data initialized successfully');
   }
   
-  // Force data refresh - useful after domain changes
   static forceRefresh(): void {
-    console.log('🔄 Force refreshing all data...');
-    
-    // Check if we have any data, if not, reinitialize
     const hasUsers = localStorage.getItem(STORAGE_KEYS.USERS);
     const hasBusinesses = localStorage.getItem(STORAGE_KEYS.BUSINESSES);
-    
+
     if (!hasUsers || !hasBusinesses) {
-      console.log('📝 No data found, reinitializing defaults...');
       this.saveUsers(DEFAULT_USERS);
       this.saveBusinesses(DEFAULT_BUSINESSES);
       this.saveJobs(DEFAULT_JOBS);
       this.saveCustomers(DEFAULT_CUSTOMERS);
       this.saveProducts(DEFAULT_PRODUCTS);
       this.saveNotifications(DEFAULT_NOTIFICATIONS);
-      
-      // Show success message
-      const successDiv = document.createElement('div');
-      successDiv.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      successDiv.textContent = 'Data reinitialized for new domain!';
-      document.body.appendChild(successDiv);
-      
-      setTimeout(() => {
-        if (document.body.contains(successDiv)) {
-          document.body.removeChild(successDiv);
-        }
-      }, 4000);
     }
   }
 }
