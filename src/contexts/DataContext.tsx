@@ -206,7 +206,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           address: '',
           phone: '',
           email: userData.email,
-          adminId: '', // Will be updated after user creation
+          adminId: undefined, // Will be updated after user creation
           features: ['job_management', 'calendar', 'reports'],
           subscription: 'basic',
           vrViewEnabled: false

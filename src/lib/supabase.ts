@@ -155,7 +155,7 @@ export class DatabaseService {
           address: businessData.address,
           phone: businessData.phone,
           email: businessData.email,
-          admin_id: businessData.adminId,
+          admin_id: businessData.adminId || null,
           features: businessData.features || [],
           subscription: businessData.subscription || 'basic',
           vr_view_enabled: businessData.vrViewEnabled || false
@@ -171,7 +171,7 @@ export class DatabaseService {
         address: data.address,
         phone: data.phone,
         email: data.email,
-        adminId: data.admin_id,
+        adminId: data.admin_id || undefined,
         features: data.features || [],
         subscription: data.subscription,
         vrViewEnabled: data.vr_view_enabled,

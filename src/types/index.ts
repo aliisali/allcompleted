@@ -29,7 +29,7 @@ export interface Business {
   address: string;
   phone: string;
   email: string;
-  adminId: string;
+  adminId?: string;
   logo?: string;
   createdAt: string;
   features: string[];
