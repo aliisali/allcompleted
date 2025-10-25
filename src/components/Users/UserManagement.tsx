@@ -34,7 +34,7 @@ export function UserManagement() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-purple-100 text-purple-800';
+      case 'admin': return 'bg-red-100 text-red-800';
       case 'business': return 'bg-blue-100 text-blue-800';
       case 'employee': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -215,7 +215,7 @@ export function UserManagement() {
   });
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-4 md:p-6">
+    <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-gray-50 p-4 md:p-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>

@@ -424,7 +424,7 @@ export function PermissionManagement() {
 
 // Add background styling to prevent white space
 const PermissionManagementWrapper = () => (
-  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-gray-50">
     <PermissionManagement />
   </div>
 );

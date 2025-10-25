@@ -5,8 +5,8 @@ export function AdminDashboard() {
   const stats = [
     { label: 'Total Users', value: '1,247', icon: Users, color: 'bg-gradient-to-r from-blue-500 to-blue-600', change: '+12%' },
     { label: 'Active Businesses', value: '89', icon: Building2, color: 'bg-gradient-to-r from-emerald-500 to-emerald-600', change: '+8%' },
-    { label: 'Platform Revenue', value: '$45,230', icon: TrendingUp, color: 'bg-gradient-to-r from-purple-500 to-purple-600', change: '+23%' },
-    { label: 'System Health', value: '99.9%', icon: Activity, color: 'bg-gradient-to-r from-indigo-500 to-indigo-600', change: '+0.1%' },
+    { label: 'Platform Revenue', value: '$45,230', icon: TrendingUp, color: 'bg-gradient-to-r from-amber-500 to-amber-600', change: '+23%' },
+    { label: 'System Health', value: '99.9%', icon: Activity, color: 'bg-gradient-to-r from-cyan-500 to-cyan-600', change: '+0.1%' },
   ];
 
   const recentActivity = [
@@ -17,7 +17,7 @@ export function AdminDashboard() {
   ];
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-4 md:p-6">
+    <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-gray-50 p-4 md:p-6">
       <div className="mb-6 md:mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="text-gray-600 mt-2">BlindsCloud platform overview and system management</p>

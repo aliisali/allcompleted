@@ -27,8 +27,8 @@ export function BusinessDashboard() {
 
   const revenueStats = [
     { label: 'Total Revenue', value: `$${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'bg-gradient-to-r from-emerald-500 to-emerald-600' },
-    { label: 'Installation Team', value: activeEmployees.toString(), icon: Users, color: 'bg-gradient-to-r from-purple-500 to-purple-600' },
-    { label: 'Growth Rate', value: '+23%', icon: TrendingUp, color: 'bg-gradient-to-r from-indigo-500 to-indigo-600' },
+    { label: 'Installation Team', value: activeEmployees.toString(), icon: Users, color: 'bg-gradient-to-r from-teal-500 to-teal-600' },
+    { label: 'Growth Rate', value: '+23%', icon: TrendingUp, color: 'bg-gradient-to-r from-cyan-500 to-cyan-600' },
     { label: 'This Month', value: `${jobs.length} Installs`, icon: Calendar, color: 'bg-gradient-to-r from-pink-500 to-pink-600' },
   ];
 
@@ -52,7 +52,7 @@ export function BusinessDashboard() {
   };
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-4 md:p-6">
+    <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-gray-50 p-4 md:p-6">
       <div className="mb-6 md:mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Business Dashboard</h1>
         <p className="text-gray-600 mt-2">Overview of your blinds business operations and performance</p>
@@ -129,7 +129,7 @@ export function BusinessDashboard() {
         {/* Performance Chart Placeholder */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Monthly Performance</h2>
-          <div className="h-64 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center">
+          <div className="h-64 bg-gradient-to-br from-blue-50 to-cyan-100 rounded-lg flex items-center justify-center">
             <div className="text-center">
               <TrendingUp className="w-12 h-12 text-blue-500 mx-auto mb-4" />
               <p className="text-gray-600">Blinds installation performance chart</p>

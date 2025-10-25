@@ -63,7 +63,7 @@ export function BusinessManagement() {
   };
 
   return (
-    <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-6">
+    <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50 to-gray-50 p-6">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Business Management</h1>
@@ -119,7 +119,7 @@ export function BusinessManagement() {
                     setSelectedBusiness(business);
                     setShowFeaturesModal(true);
                   }}
-                  className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors group relative"
+                  className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors group relative"
                   title="Manage Features"
                 >
                   <Settings className="w-4 h-4" />
@@ -168,7 +168,7 @@ export function BusinessManagement() {
               </div>
               <div className="flex items-center space-x-2">
                 <span className={`px-2 py-1 text-xs rounded-full ${
-                  business.subscription === 'premium' ? 'bg-purple-100 text-purple-800' :
+                  business.subscription === 'premium' ? 'bg-amber-100 text-amber-800' :
                   business.subscription === 'enterprise' ? 'bg-gold-100 text-gold-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>

@@ -143,7 +143,7 @@ export function MeasurementScreen({ job, onComplete }: MeasurementScreenProps) {
           <p className="text-sm text-blue-600">Add as many measurements as needed</p>
           <button
             onClick={() => setShowARCamera(true)}
-            className="flex items-center px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+            className="flex items-center px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
           >
             <Camera className="w-4 h-4 mr-1.5" />
             Use AR Camera

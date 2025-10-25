@@ -85,7 +85,7 @@ export function EmployeeDashboard() {
     { label: 'Today\'s Installs', value: todayJobs.length.toString(), icon: ClipboardList, color: 'bg-gradient-to-r from-blue-500 to-blue-600' },
     { label: 'Completed', value: completedToday.toString(), icon: CheckCircle, color: 'bg-gradient-to-r from-emerald-500 to-emerald-600' },
     { label: 'Pending', value: pendingToday.toString(), icon: Clock, color: 'bg-gradient-to-r from-amber-500 to-amber-600' },
-    { label: 'Photos Taken', value: '12', icon: Camera, color: 'bg-gradient-to-r from-purple-500 to-purple-600' },
+    { label: 'Photos Taken', value: '12', icon: Camera, color: 'bg-gradient-to-r from-teal-500 to-teal-600' },
   ];
 
   // Transform jobs data for display
@@ -111,7 +111,7 @@ export function EmployeeDashboard() {
   };
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-4 md:p-6">
+    <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-gray-50 p-4 md:p-6">
       <div className="mb-6 md:mb-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div>

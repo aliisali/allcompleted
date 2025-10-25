@@ -91,7 +91,7 @@ export function LoginForm() {
           </form>
 
           {/* Demo Accounts */}
-          <div className="mt-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
+          <div className="mt-8 p-4 bg-gradient-to-r from-blue-50 to-gray-50 rounded-lg border border-blue-100">
             <h3 className="text-sm font-medium text-gray-900 mb-3">Demo Accounts</h3>
             <p className="text-xs text-gray-600 mb-3">
               ✨ Using localStorage fallback - all demo accounts work offline

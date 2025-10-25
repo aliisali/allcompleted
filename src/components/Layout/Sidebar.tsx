@@ -94,7 +94,7 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
       {/* Minimize Button */}
       <button
         onClick={onToggleMinimize}
-        className="absolute -right-3 top-6 w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-10 border-2 border-white"
+        className="absolute -right-3 top-6 w-6 h-6 bg-gradient-to-r from-blue-500 to-gray-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-10 border-2 border-white"
         title={isMinimized ? 'Expand Sidebar' : 'Minimize Sidebar'}
       >
         {isMinimized ? (
@@ -108,7 +108,7 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
         {isMinimized ? (
           <div className="flex flex-col items-center space-y-2">
             <Logo size="sm" variant="light" showText={false} />
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-gray-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
               {user?.name.charAt(0).toUpperCase()}
             </div>
           </div>
@@ -117,7 +117,7 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
             <Logo size="md" variant="light" />
             <p className="text-xs text-blue-300 mt-2">v1.3.0 - 3D AR Models</p>
             <p className="text-sm text-gray-300 mt-1">{user?.name}</p>
-            <span className="inline-block px-2 py-1 text-xs bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full mt-2 capitalize">
+            <span className="inline-block px-2 py-1 text-xs bg-gradient-to-r from-blue-500 to-gray-500 text-white rounded-full mt-2 capitalize">
               {user?.role}
             </span>
           </>
@@ -146,7 +146,7 @@ export function Sidebar({ activeTab, onTabChange, isMinimized, onToggleMinimize 
                   }}
                   className={`w-full flex items-center ${isMinimized ? 'px-2 py-3 justify-center' : 'px-4 py-3'} text-left rounded-lg transition-all duration-200 group relative ${
                     activeTab === item.id
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg transform scale-105'
+                      ? 'bg-gradient-to-r from-blue-500 to-gray-500 text-white shadow-lg transform scale-105'
                       : 'text-gray-300 hover:bg-slate-700/50 hover:text-white hover:shadow-md'
                   }`}
                   title={isMinimized ? item.label : ''}
