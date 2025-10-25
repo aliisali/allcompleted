@@ -22,6 +22,10 @@ export function EmployeeDashboard() {
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [expandedNotifications, setExpandedNotifications] = useState(false);
+  const [timeFilter, setTimeFilter] = useState<'week' | 'month' | '6month'>('week');
+  const [installationFilter, setInstallationFilter] = useState<'all' | 'completed' | 'pending'>('all');
+  const [showMap, setShowMap] = useState(false);
+  const [mapJobLocation, setMapJobLocation] = useState<any>(null);
 
   // Auto-refresh jobs every 30 seconds to check for new assignments
   React.useEffect(() => {
@@ -36,7 +40,44 @@ export function EmployeeDashboard() {
   // Jobs are already filtered by useRoleBasedData hook
   console.log('📋 Employee jobs (role-filtered):', jobs.length);
 
-  const todayJobs = jobs.slice(0, 3);
+  // Filter jobs by time period
+  const getFilteredJobsByTime = () => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixMonthsAgo = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+
+    return jobs.filter(job => {
+      const jobDate = new Date(job.scheduledDate);
+      switch (timeFilter) {
+        case 'week':
+          return jobDate >= weekAgo;
+        case 'month':
+          return jobDate >= monthAgo;
+        case '6month':
+          return jobDate >= sixMonthsAgo;
+        default:
+          return true;
+      }
+    });
+  };
+
+  const filteredJobs = getFilteredJobsByTime();
+
+  // Filter by installation status
+  const getJobsByInstallationStatus = () => {
+    switch (installationFilter) {
+      case 'completed':
+        return filteredJobs.filter(job => job.status === 'completed');
+      case 'pending':
+        return filteredJobs.filter(job => job.status !== 'completed');
+      default:
+        return filteredJobs;
+    }
+  };
+
+  const displayJobs = getJobsByInstallationStatus();
+  const todayJobs = displayJobs.slice(0, 3);
   const completedToday = todayJobs.filter(job => job.status === 'completed').length;
   const pendingToday = todayJobs.filter(job => job.status === 'pending').length;
   
@@ -71,23 +112,72 @@ export function EmployeeDashboard() {
 
   return (
     <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-4 md:p-6">
-      <div className="mb-6 md:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Installation Dashboard</h1>
-          <p className="text-gray-600 mt-2">Your daily blinds installation tasks and schedule</p>
+      <div className="mb-6 md:mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Installation Dashboard</h1>
+            <p className="text-gray-600 mt-2">Your daily blinds installation tasks and schedule</p>
+          </div>
+          <button
+            onClick={() => {
+              console.log('🔄 Manual refresh triggered');
+              refreshData();
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Refresh Jobs</span>
+          </button>
         </div>
-        <button
-          onClick={() => {
-            console.log('🔄 Manual refresh triggered');
-            refreshData();
-          }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span>Refresh Jobs</span>
-        </button>
+
+        {/* Filters */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-white/50 p-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Time Period:</label>
+              <div className="flex space-x-1">
+                {[{ value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }, { value: '6month', label: '6 Months' }].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setTimeFilter(opt.value as any)}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                      timeFilter === opt.value
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Status:</label>
+              <div className="flex space-x-1">
+                {[{ value: 'all', label: 'All' }, { value: 'pending', label: 'Pending' }, { value: 'completed', label: 'Completed' }].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setInstallationFilter(opt.value as any)}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                      installationFilter === opt.value
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2 text-sm text-gray-600">
+            Showing {displayJobs.length} job(s) | {displayJobs.filter(j => j.status === 'completed').length} completed, {displayJobs.filter(j => j.status !== 'completed').length} pending
+          </div>
+        </div>
       </div>
 
       {/* Loading State */}
@@ -148,8 +238,17 @@ export function EmployeeDashboard() {
                     </div>
                     <p className="text-sm font-medium text-gray-700">{job.customer}</p>
                     <div className="flex items-center text-sm text-gray-500 mt-1">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {job.address}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMapJobLocation(job);
+                          setShowMap(true);
+                        }}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        <MapPin className="w-4 h-4 mr-1" />
+                        {job.address}
+                      </button>
                     </div>
                     <p className="text-sm text-blue-600 mt-1">{job.type}</p>
                   </div>
@@ -320,6 +419,69 @@ export function EmployeeDashboard() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Map Modal */}
+      {showMap && mapJobLocation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">Job Location</h3>
+              <button
+                onClick={() => {
+                  setShowMap(false);
+                  setMapJobLocation(null);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <MapPin className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <div>
+                    <h4 className="font-semibold text-blue-900 mb-2">Job Address</h4>
+                    <p className="text-gray-900">{mapJobLocation.address}</p>
+                    <p className="text-sm text-gray-600 mt-1">Job ID: {mapJobLocation.id}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Map Placeholder */}
+              <div className="bg-gray-200 rounded-lg h-96 flex items-center justify-center relative">
+                <div className="text-center">
+                  <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-700 font-medium">Interactive Map</p>
+                  <p className="text-sm text-gray-500 mt-1">Map integration will display here</p>
+                  <p className="text-xs text-gray-400 mt-2">Showing: {mapJobLocation.address}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <button
+                  onClick={() => {
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapJobLocation.address)}`, '_blank');
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Open in Google Maps
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMap(false);
+                    setMapJobLocation(null);
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

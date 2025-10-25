@@ -308,14 +308,23 @@ export function JobManagement() {
                 <div className="mb-4">
                   <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
                     <span>Progress</span>
-                    <span>{Math.round((job.checklist.filter(item => item.completed).length / job.checklist.length) * 100)}%</span>
+                    <span>
+                      {job.status === 'completed' ? '100' : Math.round((job.checklist.filter(item => item.completed).length / job.checklist.length) * 100)}%
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${(job.checklist.filter(item => item.completed).length / job.checklist.length) * 100}%` }}
+                    <div
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        job.status === 'completed' ? 'bg-green-600' : 'bg-blue-600'
+                      }`}
+                      style={{
+                        width: `${job.status === 'completed' ? 100 : (job.checklist.filter(item => item.completed).length / job.checklist.length) * 100}%`
+                      }}
                     />
                   </div>
+                  {job.status === 'completed' && (
+                    <p className="text-xs text-green-600 mt-1 font-medium">✓ Job Completed</p>
+                  )}
                 </div>
 
                 {/* Action Buttons */}

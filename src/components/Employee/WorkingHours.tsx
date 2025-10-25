@@ -7,6 +7,7 @@ export function WorkingHoursManager() {
   const { user } = useAuth();
   const [workingHours, setWorkingHours] = useState<EmployeeWorkingHours | null>(null);
   const [isEditingAccount, setIsEditingAccount] = useState(false);
+  const [autoBookingEnabled, setAutoBookingEnabled] = useState(false);
   const [accountDetails, setAccountDetails] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -18,6 +19,7 @@ export function WorkingHoursManager() {
     if (user) {
       loadWorkingHours();
       loadAccountDetails();
+      loadAutoBookingSetting();
     }
   }, [user]);
 
@@ -29,6 +31,28 @@ export function WorkingHoursManager() {
       }
     } catch (error) {
       console.error('Error loading account details:', error);
+    }
+  };
+
+  const loadAutoBookingSetting = () => {
+    try {
+      const stored = localStorage.getItem(`auto_booking_${user?.id}`);
+      if (stored) {
+        setAutoBookingEnabled(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error loading auto booking setting:', error);
+    }
+  };
+
+  const toggleAutoBooking = () => {
+    const newValue = !autoBookingEnabled;
+    setAutoBookingEnabled(newValue);
+    try {
+      localStorage.setItem(`auto_booking_${user?.id}`, JSON.stringify(newValue));
+      showSuccessMessage(newValue ? 'Auto-booking enabled!' : 'Auto-booking disabled!');
+    } catch (error) {
+      console.error('Error saving auto booking setting:', error);
     }
   };
 
@@ -294,11 +318,39 @@ export function WorkingHoursManager() {
         </div>
 
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-2">Automatic Job Assignment</h4>
-          <p className="text-blue-800 text-sm">
-            When automatic booking is enabled, jobs will only be assigned to you during your available hours.
-            Make sure to keep your working hours updated for accurate job assignment.
-          </p>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h4 className="font-medium text-blue-900 mb-2">Automatic Job Assignment</h4>
+              <p className="text-blue-800 text-sm mb-3">
+                When automatic booking is enabled, jobs will only be assigned to you during your available hours.
+                Make sure to keep your working hours updated for accurate job assignment.
+              </p>
+            </div>
+            <div className="ml-4">
+              <button
+                onClick={toggleAutoBooking}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  autoBookingEnabled ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                    autoBookingEnabled ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center space-x-2">
+            <div className={`w-3 h-3 rounded-full ${
+              autoBookingEnabled ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+            }`} />
+            <span className={`text-sm font-medium ${
+              autoBookingEnabled ? 'text-green-800' : 'text-gray-600'
+            }`}>
+              {autoBookingEnabled ? 'Auto-booking is ENABLED' : 'Auto-booking is DISABLED'}
+            </span>
+          </div>
         </div>
       </div>
     </div>

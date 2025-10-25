@@ -6,12 +6,15 @@ import { useAuth } from '../../contexts/AuthContext';
 export function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
-  const { jobs, users } = useData();
+  const { jobs, users, updateJob } = useData();
   const { user: currentUser } = useAuth();
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [showJobModal, setShowJobModal] = useState(false);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleTime, setRescheduleTime] = useState('');
 
   // Filter jobs based on user role, then convert to calendar events
   const visibleJobs = currentUser?.role === 'employee'
@@ -466,13 +469,38 @@ export function CalendarView() {
               <h4 className="text-sm font-semibold text-gray-900 mb-3">Appointment Actions</h4>
               <div className="grid grid-cols-3 gap-2">
                 <button
-                  onClick={() => alert('Reschedule functionality would open here')}
+                  onClick={() => {
+                    setShowJobModal(false);
+                    setShowRescheduleModal(true);
+                    setRescheduleDate(selectedJob.scheduledDate.split('T')[0]);
+                    setRescheduleTime(selectedJob.scheduledTime || '09:00');
+                  }}
                   className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
                   Reschedule
                 </button>
                 <button
-                  onClick={() => alert('Postpone functionality would open here')}
+                  onClick={() => {
+                    if (confirm('Postpone this appointment by 1 day?')) {
+                      const newDate = new Date(selectedJob.scheduledDate);
+                      newDate.setDate(newDate.getDate() + 1);
+                      updateJob(selectedJob.id, {
+                        scheduledDate: newDate.toISOString(),
+                        status: 'pending',
+                        jobHistory: [...selectedJob.jobHistory, {
+                          id: `history-${Date.now()}`,
+                          timestamp: new Date().toISOString(),
+                          action: 'postponed',
+                          description: 'Appointment postponed by 1 day',
+                          userId: currentUser?.id || '',
+                          userName: currentUser?.name || ''
+                        }]
+                      });
+                      alert('Appointment postponed by 1 day');
+                      setShowJobModal(false);
+                      setSelectedJob(null);
+                    }
+                  }}
                   className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm"
                 >
                   Postpone
@@ -480,7 +508,18 @@ export function CalendarView() {
                 <button
                   onClick={() => {
                     if (confirm('Are you sure you want to cancel this appointment?')) {
-                      alert('Appointment would be cancelled');
+                      updateJob(selectedJob.id, {
+                        status: 'cancelled',
+                        jobHistory: [...selectedJob.jobHistory, {
+                          id: `history-${Date.now()}`,
+                          timestamp: new Date().toISOString(),
+                          action: 'cancelled',
+                          description: 'Appointment cancelled',
+                          userId: currentUser?.id || '',
+                          userName: currentUser?.name || ''
+                        }]
+                      });
+                      alert('Appointment cancelled');
                       setShowJobModal(false);
                       setSelectedJob(null);
                     }
@@ -570,6 +609,90 @@ export function CalendarView() {
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Create Event
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reschedule Modal */}
+      {showRescheduleModal && selectedJob && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">Reschedule Appointment</h3>
+              <button
+                onClick={() => {
+                  setShowRescheduleModal(false);
+                  setShowJobModal(true);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateJob(selectedJob.id, {
+                  scheduledDate: new Date(rescheduleDate).toISOString(),
+                  scheduledTime: rescheduleTime,
+                  status: 'pending',
+                  jobHistory: [...selectedJob.jobHistory, {
+                    id: `history-${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    action: 'rescheduled',
+                    description: `Appointment rescheduled to ${rescheduleDate} at ${rescheduleTime}`,
+                    userId: currentUser?.id || '',
+                    userName: currentUser?.name || ''
+                  }]
+                });
+                alert('Appointment rescheduled successfully!');
+                setShowRescheduleModal(false);
+                setSelectedJob(null);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New Date</label>
+                <input
+                  type="date"
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New Time</label>
+                <input
+                  type="time"
+                  value={rescheduleTime}
+                  onChange={(e) => setRescheduleTime(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRescheduleModal(false);
+                    setShowJobModal(true);
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Reschedule
                 </button>
               </div>
             </form>

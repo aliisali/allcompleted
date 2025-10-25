@@ -14,13 +14,7 @@ interface Email {
   attachments?: string[];
 }
 
-export function EmailCenter() {
-  const [selectedFolder, setSelectedFolder] = useState<'inbox' | 'sent' | 'draft' | 'trash'>('inbox');
-  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
-  const [showCompose, setShowCompose] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const mockEmails: Email[] = [
+const initialMockEmails: Email[] = [
     {
       id: '1',
       from: 'customer@abccorp.com',
@@ -30,7 +24,7 @@ export function EmailCenter() {
       timestamp: '2024-01-15T10:30:00Z',
       read: false,
       starred: true,
-      folder: 'inbox'
+      folder: 'inbox' as const
     },
     {
       id: '2',
@@ -41,7 +35,7 @@ export function EmailCenter() {
       timestamp: '2024-01-14T14:20:00Z',
       read: true,
       starred: false,
-      folder: 'sent',
+      folder: 'sent' as const,
       attachments: ['quote.pdf']
     },
     {
@@ -53,18 +47,36 @@ export function EmailCenter() {
       timestamp: '2024-01-13T09:15:00Z',
       read: true,
       starred: false,
-      folder: 'inbox'
+      folder: 'inbox' as const
     },
   ];
 
+export function EmailCenter() {
+  const [selectedFolder, setSelectedFolder] = useState<'inbox' | 'sent' | 'draft' | 'trash'>('inbox');
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [emails, setEmails] = useState<Email[]>(initialMockEmails);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showCompose, setShowCompose] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
   const folders = [
-    { id: 'inbox', label: 'Inbox', icon: Inbox, count: mockEmails.filter(e => e.folder === 'inbox' && !e.read).length },
-    { id: 'sent', label: 'Sent', icon: Sent, count: mockEmails.filter(e => e.folder === 'sent').length },
-    { id: 'draft', label: 'Drafts', icon: Draft, count: mockEmails.filter(e => e.folder === 'draft').length },
-    { id: 'trash', label: 'Trash', icon: Trash2, count: mockEmails.filter(e => e.folder === 'trash').length },
+    { id: 'inbox', label: 'Inbox', icon: Inbox, count: emails.filter(e => e.folder === 'inbox' && !e.read).length },
+    { id: 'sent', label: 'Sent', icon: Sent, count: emails.filter(e => e.folder === 'sent').length },
+    { id: 'draft', label: 'Drafts', icon: Draft, count: emails.filter(e => e.folder === 'draft').length },
+    { id: 'trash', label: 'Trash', icon: Trash2, count: emails.filter(e => e.folder === 'trash').length },
   ];
 
-  const filteredEmails = mockEmails.filter(email => {
+  const handleEmailClick = (email: Email) => {
+    setSelectedEmail(email);
+    // Mark email as read when opened
+    if (!email.read) {
+      setEmails(prevEmails =>
+        prevEmails.map(e => e.id === email.id ? { ...e, read: true } : e)
+      );
+    }
+  };
+
+  const filteredEmails = emails.filter(email => {
     const matchesFolder = email.folder === selectedFolder;
     const matchesSearch = email.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          email.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -138,7 +150,7 @@ export function EmailCenter() {
             {filteredEmails.map((email) => (
               <div
                 key={email.id}
-                onClick={() => setSelectedEmail(email)}
+                onClick={() => handleEmailClick(email)}
                 className={`p-3 rounded-lg cursor-pointer transition-colors ${
                   selectedEmail?.id === email.id
                     ? 'bg-blue-50 border border-blue-200'
@@ -222,8 +234,18 @@ export function EmailCenter() {
                           <Paperclip className="w-4 h-4 text-gray-500 mr-2" />
                           <span className="text-sm text-gray-700">{attachment}</span>
                         </div>
-                        <button className="text-blue-600 hover:text-blue-800 text-sm">
-                          Download
+                        <button
+                          onClick={() => {
+                            // Simulate image preview
+                            if (attachment.endsWith('.jpg') || attachment.endsWith('.png') || attachment.endsWith('.jpeg')) {
+                              setSelectedImage(attachment);
+                            } else {
+                              alert(`Downloading ${attachment}`);
+                            }
+                          }}
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          {attachment.endsWith('.jpg') || attachment.endsWith('.png') || attachment.endsWith('.jpeg') ? 'Preview' : 'Download'}
                         </button>
                       </div>
                     ))}
@@ -283,10 +305,19 @@ export function EmailCenter() {
               </div>
 
               <div className="flex items-center justify-between pt-4">
-                <button className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                <label className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer">
                   <Paperclip className="w-4 h-4 mr-2" />
                   Attach Files
-                </button>
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      alert(`Selected ${files.length} file(s): ${files.map(f => f.name).join(', ')}`);
+                    }}
+                  />
+                </label>
                 <div className="flex space-x-3">
                   <button
                     onClick={() => setShowCompose(false)}
@@ -300,6 +331,45 @@ export function EmailCenter() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Image Preview</h3>
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="bg-gray-100 rounded-lg p-4 mb-4">
+              <img
+                src="https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg"
+                alt={selectedImage}
+                className="w-full h-auto rounded"
+              />
+            </div>
+            <p className="text-sm text-gray-600 mb-4">File: {selectedImage}</p>
+            <div className="flex justify-between">
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                ← Back to Email
+              </button>
+              <button
+                onClick={() => alert(`Downloading ${selectedImage}`)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Download
+              </button>
             </div>
           </div>
         </div>
