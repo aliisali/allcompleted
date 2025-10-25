@@ -228,12 +228,24 @@ export function PermissionManagement() {
                 
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => setEditingRole(role)}
+                    onClick={() => {
+                      setEditingRole(role);
+                      setShowCreateModal(true);
+                    }}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Edit Role"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Are you sure you want to delete the role "${role.name}"?`)) {
+                        alert('Role deletion functionality will be implemented in backend integration');
+                      }
+                    }}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete Role"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -281,10 +293,22 @@ export function PermissionManagement() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
-                        <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <button
+                          onClick={() => {
+                            alert(`Permission Details:\n\nName: ${permission.name}\nDescription: ${permission.description}\nCategory: ${permission.category}\nAssigned to roles: ${permission.roles.join(', ')}`);
+                          }}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="View Permission Details"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                        <button
+                          onClick={() => {
+                            alert(`Edit permission functionality will be available in the next update.\n\nPermission: ${permission.name}`);
+                          }}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          title="Edit Permission"
+                        >
                           <Edit className="w-4 h-4" />
                         </button>
                       </div>
@@ -302,16 +326,29 @@ export function PermissionManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Create New Role</h3>
+              <h3 className="text-xl font-semibold text-gray-900">
+                {editingRole ? `Edit Role: ${editingRole.name}` : 'Create New Role'}
+              </h3>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setEditingRole(null);
+                }}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            <form className="space-y-6">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                alert('Role creation functionality will be integrated with the backend in the next update.');
+                setShowCreateModal(false);
+                setEditingRole(null);
+              }}
+              className="space-y-6"
+            >
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Role Name *
@@ -319,6 +356,7 @@ export function PermissionManagement() {
                 <input
                   type="text"
                   required
+                  defaultValue={editingRole?.name || ''}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter role name"
                 />
@@ -331,6 +369,7 @@ export function PermissionManagement() {
                 <textarea
                   required
                   rows={3}
+                  defaultValue={editingRole?.description || ''}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Describe the role"
                 />
@@ -345,6 +384,7 @@ export function PermissionManagement() {
                     <label key={permission.id} className="flex items-start space-x-3">
                       <input
                         type="checkbox"
+                        defaultChecked={editingRole?.permissions?.includes(permission.id)}
                         className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                       <div className="flex-1">
@@ -359,7 +399,10 @@ export function PermissionManagement() {
               <div className="flex justify-end space-x-3 pt-6">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setEditingRole(null);
+                  }}
                   className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                 >
                   Cancel
@@ -368,7 +411,7 @@ export function PermissionManagement() {
                   type="submit"
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Create Role
+                  {editingRole ? 'Update Role' : 'Create Role'}
                 </button>
               </div>
             </form>

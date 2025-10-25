@@ -11,6 +11,7 @@ export function ProductManagement() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [productImages, setProductImages] = useState<string[]>([]);
   const [newProduct, setNewProduct] = useState({
     name: '',
     category: '',
@@ -21,21 +22,28 @@ export function ProductManagement() {
   });
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(file => {
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image size should be less than 5MB');
+        alert(`Image ${file.name} is too large. Size should be less than 5MB`);
         return;
       }
 
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        setNewProduct({...newProduct, image: base64String});
-        setImagePreview(base64String);
+        setProductImages(prev => [...prev, base64String]);
+
+        // Set first image as primary if none selected
+        if (!newProduct.image && productImages.length === 0) {
+          setNewProduct({...newProduct, image: base64String});
+          setImagePreview(base64String);
+        }
       };
       reader.readAsDataURL(file);
-    }
+    });
   };
 
   const categories = ['Window Blinds', 'Smart Blinds', 'Venetian Blinds', 'Roller Blinds', 'Vertical Blinds', 'Roman Blinds'];
@@ -88,6 +96,7 @@ export function ProductManagement() {
         specifications: [''],
         price: ''
       });
+      setProductImages([]);
 
       setShowCreateModal(false);
       setImagePreview('');
@@ -295,12 +304,16 @@ export function ProductManagement() {
 
       {/* Create Product Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-900">Add New Product</h3>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setProductImages([]);
+                  setImagePreview('');
+                }}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <X className="w-6 h-6" />
@@ -372,20 +385,21 @@ export function ProductManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Image *
+                  Product Images * (Upload multiple images)
                 </label>
 
                 <div className="space-y-3">
-                  {/* File Upload */}
+                  {/* File Upload - Multiple */}
                   <div className="flex items-center space-x-3">
                     <label className="flex-1 cursor-pointer">
                       <div className="flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
                         <Upload className="w-5 h-5 text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-600">Upload from device</span>
+                        <span className="text-sm text-gray-600">Upload multiple images from device</span>
                       </div>
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         onChange={handleImageUpload}
                         className="hidden"
                       />
@@ -404,21 +418,60 @@ export function ProductManagement() {
                     type="url"
                     value={newProduct.image.startsWith('data:') ? '' : newProduct.image}
                     onChange={(e) => {
-                      setNewProduct({...newProduct, image: e.target.value});
+                      const url = e.target.value;
+                      setNewProduct({...newProduct, image: url});
+                      if (url && !url.startsWith('data:')) {
+                        setProductImages([url]);
+                      }
                       setImagePreview('');
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="https://example.com/image.jpg"
                   />
 
-                  {/* Image Preview */}
-                  {(imagePreview || newProduct.image) && (
+                  {/* Image Gallery Preview */}
+                  {productImages.length > 0 && (
                     <div className="mt-3">
-                      <img
-                        src={imagePreview || newProduct.image}
-                        alt="Preview"
-                        className="w-full h-48 object-cover rounded-lg border border-gray-200"
-                      />
+                      <p className="text-sm text-gray-600 mb-2">{productImages.length} image(s) uploaded</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {productImages.map((img, idx) => (
+                          <div key={idx} className="relative group">
+                            <img
+                              src={img}
+                              alt={`Product ${idx + 1}`}
+                              className={`w-full h-24 object-cover rounded-lg border-2 cursor-pointer ${
+                                newProduct.image === img ? 'border-blue-500' : 'border-gray-200'
+                              }`}
+                              onClick={() => {
+                                setNewProduct({...newProduct, image: img});
+                                setImagePreview(img);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = productImages.filter((_, i) => i !== idx);
+                                setProductImages(updated);
+                                if (newProduct.image === img && updated.length > 0) {
+                                  setNewProduct({...newProduct, image: updated[0]});
+                                  setImagePreview(updated[0]);
+                                } else if (updated.length === 0) {
+                                  setNewProduct({...newProduct, image: ''});
+                                  setImagePreview('');
+                                }
+                              }}
+                              className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                            {newProduct.image === img && (
+                              <div className="absolute inset-0 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <span className="text-xs text-white font-bold bg-blue-500 px-2 py-1 rounded">Primary</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
