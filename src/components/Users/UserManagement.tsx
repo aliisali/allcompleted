@@ -666,29 +666,40 @@ export function UserManagement() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  User Role *
-                </label>
-                <select
-                  required
-                  value={newUser.role}
-                  onChange={(e) => setNewUser({...newUser, role: e.target.value as 'admin' | 'business' | 'employee'})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {getAvailableRoles().map((role) => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-sm text-gray-500 mt-1">
-                  {currentUser?.role === 'admin' 
-                    ? 'Admin users can create any user type'
-                    : 'Business users can only create employee users for their business'
-                  }
-                </p>
-              </div>
+              {currentUser?.role === 'admin' ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    User Role *
+                  </label>
+                  <select
+                    required
+                    value={newUser.role}
+                    onChange={(e) => setNewUser({...newUser, role: e.target.value as 'admin' | 'business' | 'employee'})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {getAvailableRoles().map((role) => (
+                      <option key={role.value} value={role.value}>
+                        {role.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Admin users can create any user type
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    User Type
+                  </label>
+                  <div className="px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-blue-900 font-medium">Employee User</p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Business users can only create employees for their business
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {newUser.role === 'business' && currentUser?.role === 'admin' && (
                 <div>
